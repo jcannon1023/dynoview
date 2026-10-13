@@ -1,0 +1,32 @@
+name: Update league data
+
+on:
+  schedule:
+    - cron: "17 * * * *"   # every hour, at :17
+  workflow_dispatch:        # lets you run it by hand from the Actions tab
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-data
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build data.json from Sleeper, FantasyCalc and DynastyProcess
+        run: python build_data.py
+      - name: Save the new data
+        run: |
+          git config user.name "dynoview-bot"
+          git config user.email "dynoview-bot@users.noreply.github.com"
+          git add data.json
+          git diff --cached --quiet && echo "No changes" && exit 0
+          git commit -m "Update league data"
+          git push
