@@ -1,3 +1,18 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0F1512">
+<meta name="color-scheme" content="dark">
+<meta name="apple-mobile-web-app-title" content="DynoView">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
 <title>DynoView</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -155,7 +170,8 @@ tr.cut td{border-bottom:2px solid var(--accent)}
 @media (prefers-reduced-motion:no-preference){.panel{animation:fade .18s ease-out}@keyframes fade{from{opacity:.5}to{opacity:1}}}
 @media (max-width:420px){.stats b{font-size:19px}.hero .nm{font-size:26px}.swap{grid-template-columns:1fr}}
 </style>
-
+</head>
+<body>
 <div class="wrap">
   <header class="bar">
     <div class="bar-in">
@@ -227,7 +243,7 @@ function renderTeams(){
   const myAge = avgAge(t.players);
   const ageRank = myAge == null ? null : 1 + teams.filter(x => { const a = avgAge(x.players); return a != null && a < myAge; }).length;
   let h = `<div class="picker"><label class="sub" for="teamSel">Team</label><select id="teamSel">${teams.map(x => `<option value="${x.rid}"${x.rid === t.rid ? " selected" : ""}>${esc(x.name)} · ${esc(x.team)}</option>`).join("")}</select></div>`;
-  h += `<section class="card"><div class="hero"><div class="nm">${esc(t.name)}</div><div style="text-align:right">${tagHtml(t.label)}</div><div class="tm">${esc(t.team)}${t.mode ? ` · recently ${t.mode}` : ""}${t.premium ? ` · pays about a ${t.premium}% premium` : ""}</div></div>
+  h += `<section class="card"><div class="hero"><div class="nm">${esc(t.name)}</div><div style="text-align:right">${tagHtml(t.label)}</div><div class="tm">${esc(t.team)}</div></div>
     <div class="stats"><div>Record<b>${rec}</b></div><div>Points<b>${Math.round(t.pf)}</b></div><div>Win‑now<b>#${t.now_rank}</b></div><div>Future<b>#${t.fut_rank}</b></div><div>Avg age<b>${myAge != null ? myAge.toFixed(1) : "–"}</b><small>${ageRank ? ordinal(ageRank) + " youngest" : ""}</small></div></div></section>`;
   h += `<section><div class="card-h" style="padding:0 2px 8px;border:0"><h3>Position strength</h3><small>rank in the league</small></div><div class="needs">${["QB","RB","WR","TE"].map(p => { const n = t.needs[p]; return `<div class="need ${n.tag}"><div class="p">${p}</div><div class="s">${esc(n.tag)}</div><div class="c">#${n.rank} of ${D.league.teams}</div><div class="c">avg ${avgAge(t.players, p) != null ? avgAge(t.players, p).toFixed(1) : "–"} yrs</div></div>`; }).join("")}</div>
     <p class="sub" style="margin:8px 2px 0">Compares each team's top QB, top 3 RBs, top 3 WRs and top TE, with the best player counting most. Value is 70% this season, 30% long-term. Bench depth and IR don't count.</p></section>`;
@@ -288,7 +304,7 @@ function renderLeague(){
   const order = [...D.teams].sort((a, b) => a.now_rank - b.now_rank);
   let h = `<section><h2>Who's in what window</h2><p class="sub" style="margin:4px 0 0">Win-now = best possible starting lineup by this season's values, plus points scored so far. Future = value of players 25 and under plus draft picks. Trades from the last 90 days can move a team one tier: buying win-now players with picks and youth pushes toward All-in, selling pushes toward Rebuilding.</p></section>`;
   h += `<section class="card"><div class="chart">${scatter()}</div><div class="legend" style="padding:0 14px 12px">${["All-in","Frisky","Rebuilding"].map(l => tagHtml(l)).join("")}</div></section>`;
-  h += `<section class="card"><div class="card-h"><h3>Position strength</h3><small>rank in the league</small></div><div class="tbl"><table><thead><tr><th>Team</th><th>Window</th>${["QB","RB","WR","TE"].map(p => `<th class="c">${p}</th>`).join("")}</tr></thead><tbody>${order.map(t => `<tr><td><b>${esc(t.name)}</b></td><td>${tagHtml(lab(t.label))}${modeHtml(t)}</td>${["QB","RB","WR","TE"].map(p => { const n = t.needs[p]; const c = n.tag === "Weak" ? "N" : n.tag === "Strong" ? "S" : "K"; return `<td class="c"><span class="cell ${c}">#${n.rank}</span></td>`; }).join("")}</tr>`).join("")}</tbody></table></div></section>`;
+  h += `<section class="card"><div class="card-h"><h3>Position strength</h3><small>rank in the league</small></div><div class="tbl"><table><thead><tr><th>Team</th><th>Window</th>${["QB","RB","WR","TE"].map(p => `<th class="c">${p}</th>`).join("")}</tr></thead><tbody>${order.map(t => `<tr><td><b>${esc(t.name)}</b></td><td>${tagHtml(lab(t.label))}</td>${["QB","RB","WR","TE"].map(p => { const n = t.needs[p]; const c = n.tag === "Weak" ? "N" : n.tag === "Strong" ? "S" : "K"; return `<td class="c"><span class="cell ${c}">#${n.rank}</span></td>`; }).join("")}</tr>`).join("")}</tbody></table></div></section>`;
   const R = D.draft_race; const stand = [...D.teams].sort((a, b) => a.standing - b.standing);
   h += `<section class="card"><div class="card-h"><h3>Draft race</h3><small>picks 1–${R.order.length}, as of week ${D.league.week}</small></div>
     <div style="padding:12px 14px 4px" class="sub">Teams that miss the playoffs pick in order of fewest max possible points (Sleeper's best-possible-lineup total), so tanking doesn't help.</div>
@@ -315,7 +331,7 @@ function renderTrades(){
     h += sale.map(x => `<div class="fact"><span><b>${esc(x.player)}</b> <span class="sub">${x.pos}, ${x.age} · ${esc(T[x.seller].name)}</span></span><span>${x.ir ? '<span class="slot">IR</span> ' : ""}<span class="age ${x.window}">${x.window}</span></span><span class="d">${x.shop_to.length ? "Shop to " + x.shop_to.map(r => esc(T[r].name)).join(", ") : "No contender needs him at the moment"} · worth ${fmt(x.market)}</span></div>`).join("");
     h += `</section>`;
   }
-  h += `<section><h2>Trade ideas</h2><p class="sub" style="margin:4px 0 0">Conversation starters, not verdicts. The price is the player's value this season or long-term, whichever is higher (aging players are priced on this season only), plus a premium that slides from 10% to 25% depending on how strong the buyer is now and how hard they've been buying lately. Buyers pay in picks and young bench players, never their starters. Starting RBs carry a 15% scarcity bump, and unproven young players (rookies, or not producing yet) count for 80% as payment. 1sts scale with quality: under 1.5k gets none, 4k+ can get two, and aging players need to be worth 3k+ to fetch one. Values from FantasyCalc.</p></section>`;
+  h += `<section><h2>Trade ideas</h2><p class="sub" style="margin:4px 0 0">Conversation starters, not verdicts. Prices use each player's value plus a contender premium, and buyers pay with picks and young bench players, never their starters.</p></section>`;
   let list = D.ideas.filter(mine);
   if (f === "all") { const per = {}, seen = new Set(); list = list.filter(x => { if (seen.has(x.give.label) || (per[x.buyer] || 0) >= 2) return false; seen.add(x.give.label); per[x.buyer] = (per[x.buyer] || 0) + 1; return true; }).slice(0, 10); }
   if (!list.length) h += `<section class="card"><div class="block"><div class="sub">No packages line up for ${f === "all" ? "anyone" : esc(T[f].name)} right now. Check back after the next update.</div></div></section>`;
@@ -325,7 +341,7 @@ function renderTrades(){
     h += `<section class="card idea"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><h3>${esc(s.name)} ⇄ ${esc(b.name)}</h3><span class="sub">${lab(s.label)} → ${lab(b.label)}</span></div>
       <div class="swap"><div class="side"><div class="who">${esc(b.name)} gets</div><ul><li>${esc(x.give.label)}</li></ul><div class="v">worth ${fmt(x.market)} · asking ${fmt(x.ask)}</div></div>
       <div class="side"><div class="who">${esc(s.name)} gets</div><ul>${x.get.map(g => `<li>${esc(g.label)}</li>`).join("")}</ul><div class="v">value ${fmt(x.get_v)}</div></div></div>
-      <ul class="why">${x.why.map(w => `<li>${esc(w)}</li>`).join("")}<li>${x.premium}% premium: ${esc(b.name)} is ${esc(b.label)}${b.mode === "buying" ? " and has been buying" : ""}.</li></ul></section>`;
+      <ul class="why">${x.why.map(w => `<li>${esc(w)}</li>`).join("")}<li>Includes a contender premium since ${esc(b.name)} is ${esc(b.label)}.</li></ul></section>`;
   }
   return h + `</div>`;
 }
@@ -378,3 +394,5 @@ document.addEventListener("change", (e) => {
 render();
 if (!D) fetch("data.json", {cache: "no-store"}).then(r => r.json()).then(j => { D = j; render(); }).catch(() => {});
 </script>
+</body>
+</html>
