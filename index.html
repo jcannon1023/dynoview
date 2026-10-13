@@ -321,7 +321,7 @@ function renderTrades(){
   const T = byRid();
   const f = st.tradeTeam || "all";
   const mine = (x) => f === "all" || String(x.seller) === f || String(x.buyer) === f;
-  let h = `<section class="card"><div class="block"><svg viewBox="0 0 64 64" aria-hidden="true">${rex()}</svg><div><h3>Trade block</h3><p>Coming next: put players on the block right from here, and everyone in the league sees it.</p></div></div></section>`;
+  let h = "";
   h += `<div class="picker"><label class="sub" for="tradeSel">Show</label><select id="tradeSel"><option value="all">All teams</option>${D.teams.map(x => `<option value="${x.rid}"${String(x.rid) === f ? " selected" : ""}>${esc(x.name)} · ${esc(x.label)}</option>`).join("")}</select></div>`;
   const showSale = f === "all" || T[f].label !== "All-in";
   if (showSale) {
