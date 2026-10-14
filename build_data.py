@@ -255,8 +255,10 @@ def main():
         st_ = r.get("settings") or {}
         t["max_pf"] = round(st_.get("ppts", 0) + st_.get("ppts_decimal", 0) / 100, 2)
     out_of = [t for t in standings[playoff_n:]]
-    race = sorted(out_of, key=lambda t: t["max_pf"])
-    draft_race = {"playoff_teams": playoff_n, "order": [t["rid"] for t in race],
+    # Per-league rule: "max_pf" (fewest max possible points picks first) or "standings" (worst record first)
+    by = (CFG.get("draft_order_by_league") or {}).get(str(lid), CFG.get("draft_order", "max_pf"))
+    race = list(reversed(out_of)) if by == "standings" else sorted(out_of, key=lambda t: t["max_pf"])
+    draft_race = {"playoff_teams": playoff_n, "by": by, "order": [t["rid"] for t in race],
                   "bubble": [t["rid"] for t in standings[max(0, playoff_n - 2): playoff_n]]}
 
     # ---------- picks ----------
