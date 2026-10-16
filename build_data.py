@@ -428,7 +428,10 @@ def main():
         if s["label"] == "Competing":
             cands = [p for p in s["players"] if p["id"] in depth_ids and max(p["rv"], p["dv"]) >= 1500]
         else:
-            cands = [p for p in s["players"] if p["pos"] in SKILL and (p.get("start") or p.get("slot") == "IR") and window(p) in ("Prime", "Aging")
+            # Frisky teams only shop players near the end of their prime (last 2 years) or past it;
+            # Rebuilding teams shop anyone in or past their prime
+            late = lambda p: window(p) == "Aging" or (window(p) == "Prime" and (s["label"] == "Rebuilding" or int(p["age"]) >= win[p["pos"]][1] - 1))
+            cands = [p for p in s["players"] if p["pos"] in SKILL and (p.get("start") or p.get("slot") == "IR") and late(p)
                  and max(p["rv"], p["dv"]) >= (500 if window(p) == "Aging" else 1500)]
         for p in cands:
             wnd = window(p)
@@ -447,7 +450,7 @@ def main():
                 # Price = dynasty value: it comes from real dynasty trades, so it already prices in current
                 # production (and, in Superflex, the QB premium). Win-now urgency is the contender premium's job.
                 market = p["dv"]
-                rb_scarcity = 1.15 if p["pos"] == "RB" and not sflex else 1.0   # 1QB only: starting RBs are scarce; in Superflex, QBs are
+                rb_scarcity = 1.15 if p["pos"] == "RB" else 1.0   # starting RBs are harder to find than WRs
 
                 target = market * premium * rb_scarcity
                 assets = [{"label": f'{k["yr"]} {ordn[k["rd"]]}' + (f' ({k["proj"]})' if k["proj"] else "") +
