@@ -405,7 +405,7 @@ def main():
         return "Young" if a <= w[0] else "Prime" if a <= w[1] else "Aging"
     PREMIUM = {"Competing": 1.25, "Frisky": 1.15}
     def mkt(p):
-        return p["rv"] if window(p) == "Aging" else max(p["dv"], p["rv"])
+        return p["dv"]
     def room(t, k):
         return sorted([q for q in t["players"] if q["pos"] == k and healthy(q) and q.get("slot") != "Taxi"], key=lambda q: -q["rv"])
     def spares(t, k):
@@ -444,9 +444,11 @@ def main():
                     continue  # wouldn't crack their lineup
                 gain = p["rv"] - kth
                 premium = 1 + b["premium"] / 100
-                # aging players are worth what they score now; everyone else is worth the higher of now / long-term
-                market = p["rv"] if wnd == "Aging" else max(p["dv"], p["rv"])
-                rb_scarcity = 1.15 if p["pos"] == "RB" else 1.0   # starting RBs are harder to find than WRs
+                # Price = dynasty value: it comes from real dynasty trades, so it already prices in current
+                # production (and, in Superflex, the QB premium). Win-now urgency is the contender premium's job.
+                market = p["dv"]
+                rb_scarcity = 1.15 if p["pos"] == "RB" and not sflex else 1.0   # 1QB only: starting RBs are scarce; in Superflex, QBs are
+
                 target = market * premium * rb_scarcity
                 assets = [{"label": f'{k["yr"]} {ordn[k["rd"]]}' + (f' ({k["proj"]})' if k["proj"] else "") +
                            ("" if k["from"] == b["rid"] else f' via {teams[k["from"]]["name"]}'), "v": k["v"], "first": k["rd"] == 1}
@@ -480,7 +482,7 @@ def main():
             fits.sort(key=lambda f: (-f["weak"], -f["gain"]))
             if not depth_sale:   # the "sell before it's too late" list is for teams outside their window
                 for_sale.append({"seller": s["rid"], "player": f'{p["n"]}', "pos": p["pos"], "age": int(p["age"]), "window": wnd,
-                                 "market": round(p["rv"] if wnd == "Aging" else max(p["dv"], p["rv"])), "urgency": urgency,
+                                 "market": round(p["dv"]), "urgency": urgency,
                                  "shop_to": [f["buyer"] for f in fits[:4]], "ir": p.get("slot") == "IR"})
             if p.get("slot") == "IR":
                 continue  # no packaged ideas for injured players

@@ -362,7 +362,7 @@ function renderTrades(){
     h += sale.map(x => `<div class="fact"><span><b>${esc(x.player)}</b> <span class="sub">${x.pos}, ${x.age} · ${esc(T[x.seller].name)}</span></span><span>${x.ir ? '<span class="slot">IR</span> ' : ""}<span class="age ${x.window}">${x.window}</span></span><span class="d">${x.shop_to.length ? "Shop to " + x.shop_to.map(r => esc(T[r].name)).join(", ") : "No contender needs him at the moment"} · worth ${fmt(x.market)}</span></div>`).join("");
     h += `</section>`;
   }
-  h += `<section><h2>Trade ideas</h2><p class="sub" style="margin:4px 0 0">Conversation starters, not verdicts. Veterans from teams outside their window, plus spare depth from contenders. Prices use each player's value plus a contender premium, and buyers pay with picks and young bench players, never their starters.</p></section>`;
+  h += `<section><h2>Trade ideas</h2><p class="sub" style="margin:4px 0 0">Conversation starters, not verdicts. Veterans from teams outside their window, plus spare depth from contenders. Prices use each player's dynasty value plus a contender premium, and buyers pay with picks and young bench players, never their starters.</p></section>`;
   let list = D.ideas.filter(mine);
   if (f === "all") { const per = {}, seen = new Set(); list = list.filter(x => { if (seen.has(x.give.label) || (per[x.buyer] || 0) >= 2) return false; seen.add(x.give.label); per[x.buyer] = (per[x.buyer] || 0) + 1; return true; }).slice(0, 10); }
   if (!list.length) h += `<section class="card"><div class="block"><div class="sub">No packages line up for ${f === "all" ? "anyone" : esc(T[f].name)} right now. Check back after the next update.</div></div></section>`;
