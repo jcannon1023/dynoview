@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#161112"/><g transform="translate(6.4 4.4) scale(.8)"><g>
+  <path d="M3 41c5 2 9 1 12-2l3 7c-6 3-11 1-15-5z" fill="#E2837A"/>
+  <ellipse cx="26" cy="42" rx="16" ry="11" fill="#E2837A"/>
+  <rect x="13" y="47" width="6" height="11" rx="3" fill="#E2837A"/>
+  <rect x="21" y="49" width="6" height="10" rx="3" fill="#B8615A"/>
+  <rect x="30" y="49" width="6" height="10" rx="3" fill="#B8615A"/>
+  <rect x="35" y="47" width="6" height="11" rx="3" fill="#E2837A"/>
+  <path d="M30 32c0-12 9-20 18-19 1 0 1.5 1 1 2-2 3-1.5 7 1 9l-6 13c-6 2-11 0-14-5z" fill="#B8615A"/>
+  <path d="M31.5 30c1-6 4-10 8-12M33 35c0-3 1-5 3-7" stroke="#E2837A" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".7"/>
+  <rect x="38" y="24" width="22" height="16" rx="8" fill="#E2837A"/>
+  <path d="M58 30l5.5 2.5-5.5 3z" fill="#E2837A"/>
+  <path d="M59 26.5l1.5-5 2 5.5z" fill="#F1E6CF"/>
+  <path d="M38 27c-.5-7 4-12 10-12.5 4.5-.3 8 1.5 9.5 5l-1 4.5H44l-4 6.5z" fill="#EFE8E8"/>
+  <path d="M46 16.5l3.5-9 1.5 9.5zM53 18l5-7.5-.5 9z" fill="#F1E6CF"/>
+  <path d="M43 17.5c2.5-1.5 6-2 9-1.3" stroke="#E2837A" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+  <circle cx="51" cy="28.5" r="2.4" fill="#201819"/><circle cx="51.7" cy="28.6" r="1.2" fill="#EFE8E8"/>
+  <circle cx="42" cy="23" r="2.1" fill="#201819"/>
+  <path d="M47 35.5c3.5 1.3 8 1.2 11.5-.6" stroke="#EFE8E8" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <path d="M45 30.5h17.5M45 34h17M53 30.5v3.5M61.5 30.5v3.5" stroke="#A79A9C" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+</g></g></svg>

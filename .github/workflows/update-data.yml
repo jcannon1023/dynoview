@@ -20,13 +20,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Build data.json from Sleeper, FantasyCalc and DynastyProcess
-        run: python build_data.py
+      - name: Build both leagues from Sleeper, FantasyCalc and DynastyProcess
+        run: |
+          python build_data.py config.json data.json
+          python build_data.py fn/config.json fn/data.json
+          python make_pages.py
       - name: Save the new data
         run: |
           git config user.name "dynoview-bot"
           git config user.email "dynoview-bot@users.noreply.github.com"
-          git add data.json
+          git add data.json fn/data.json fn/index.html
           git diff --cached --quiet && echo "No changes" && exit 0
           git commit -m "Update league data"
           git push

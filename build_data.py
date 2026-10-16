@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
 """DynoView data build: Sleeper + FantasyCalc -> data.json for one league.
 
-Run:  python3 build_data.py            (writes data.json next to this file)
-Config lives in config.json (league id, nicknames by Sleeper user id).
+Run:  python3 build_data.py [config.json] [data.json]
+      defaults: config.json -> data.json (Shermonic); FN: python3 build_data.py fn/config.json fn/data.json
+Config holds the league id, nicknames by Sleeper user id, age windows, the draft-order rule and the page skin.
 """
 import json, os, sys, csv, io, datetime, urllib.request
 from concurrent.futures import ThreadPoolExecutor
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-CFG = json.load(open(os.path.join(HERE, "config.json")))
+CFG_PATH = os.path.join(HERE, sys.argv[1] if len(sys.argv) > 1 else "config.json")
+OUT_PATH = os.path.join(HERE, sys.argv[2] if len(sys.argv) > 2 else "data.json")
+CFG = json.load(open(CFG_PATH))
 SLEEPER = "https://api.sleeper.app/v1"
 FC = "https://api.fantasycalc.com/values/current"
 DP = "https://raw.githubusercontent.com/dynastyprocess/data/master/files/"
@@ -255,8 +258,9 @@ def main():
         st_ = r.get("settings") or {}
         t["max_pf"] = round(st_.get("ppts", 0) + st_.get("ppts_decimal", 0) / 100, 2)
     out_of = [t for t in standings[playoff_n:]]
-    # Per-league rule: "max_pf" (fewest max possible points picks first) or "standings" (worst record first)
-    by = (CFG.get("draft_order_by_league") or {}).get(str(lid), CFG.get("draft_order", "max_pf"))
+    # Non-playoff teams: "max_pf" (fewest max possible points picks first, Shermonic) or
+    # "standings" (worst record first, FN). Playoff teams always pick by playoff finish, champion last.
+    by = CFG.get("draft_order", "max_pf")
     race = list(reversed(out_of)) if by == "standings" else sorted(out_of, key=lambda t: t["max_pf"])
     draft_race = {"playoff_teams": playoff_n, "by": by, "order": [t["rid"] for t in race],
                   "bubble": [t["rid"] for t in standings[max(0, playoff_n - 2): playoff_n]]}
@@ -279,9 +283,19 @@ def main():
     wt_rec = min(0.5, games / 14 * 0.5)  # record matters more as the season goes on
     for i, r in enumerate(rids):
         teams[r]["now_score"] = round((1 - wt_rec) * zl[i] + wt_rec * zp[i], 3)
-    # projected slot for next year's picks: the draft race decides 1-4, the rest follow win-now strength
-    rest_order = sorted([r for r in rids if r not in draft_race["order"]], key=lambda r: teams[r]["now_score"])
+    # Projected draft order: the draft race fills the top, then playoff teams by playoff finish (champion last).
+    # Until the playoffs finish, playoff teams are projected by win-now strength (weakest picks first).
+    finish = playoff_finish(lid) if league.get("status") in ("post_season", "complete") else {}
+    rest = [r for r in rids if r not in draft_race["order"]]
+    if finish and all(r in finish for r in rest):
+        rest_order = sorted(rest, key=lambda r: -finish[r]); basis = "playoff finish"
+    else:
+        rest_order = sorted(rest, key=lambda r: teams[r]["now_score"]); basis = "projected by win-now strength"
     proj_order = draft_race["order"] + rest_order
+    draft_race["projected"] = proj_order
+    draft_race["rest_basis"] = basis
+    for i, r in enumerate(proj_order):
+        teams[r]["proj_slot"] = i + 1
     third = max(1, teams_n // 3)
     phase = {r: ("Early" if i < third else "Late" if i >= teams_n - third else "Mid") for i, r in enumerate(proj_order)}
     ordn = {1: "1st", 2: "2nd", 3: "3rd", 4: "4th", 5: "5th"}
@@ -469,7 +483,8 @@ def main():
     out = {
         "generated": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="minutes"),
         "league": {"id": lid, "name": league["name"], "season": S, "teams": teams_n, "week": nfl.get("display_week"),
-                   "format": f'{nqb}QB · {"PPR" if ppr == 1 else str(ppr) + " PPR"} · {teams_n} teams',
+                   "format": f'{"Superflex" if sflex else str(nqb) + "QB"} · {"PPR" if ppr == 1 else str(ppr) + " PPR"} · {teams_n} teams',
+                   "skin": CFG.get("skin", "rex"), "default_team": CFG.get("default_team"),
                    "slots": slots, "flex": flex, "sflex": sflex},
         "teams": sorted(teams.values(), key=lambda t: t["name"].lower()),
         "ideas": out_ideas,
@@ -482,9 +497,23 @@ def main():
     for t in out["teams"]:
         t.pop("lineup_ids", None); t.pop("_pos_val", None)
         t["players"].sort(key=lambda p: (["QB", "RB", "WR", "TE", "K", "DST"].index(p["pos"]) if p["pos"] in ("QB", "RB", "WR", "TE", "K", "DST") else 9, -p["dv"]))
-    path = os.path.join(HERE, "data.json")
+    path = OUT_PATH
     json.dump(out, open(path, "w"), separators=(",", ":"), ensure_ascii=False)
     print("wrote", path, os.path.getsize(path), "bytes;", len(out_ideas), "trade ideas;", len(hist["seasons"]), "seasons of history")
+
+
+def playoff_finish(lid):
+    """{roster_id: final place} from the winners bracket (1 = champion); empty if not decided yet."""
+    try:
+        wb = sl(f"/league/{lid}/winners_bracket") or []
+    except Exception:
+        return {}
+    place = {}
+    for m in wb:
+        p = m.get("p")
+        if p and m.get("w") and m.get("l"):
+            place[m["w"]] = p; place[m["l"]] = p + 1
+    return place
 
 
 def build_history(lid, teams_now, players, nfl):

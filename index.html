@@ -38,6 +38,11 @@
   --accent:#4FBF8A; --accent-ink:#0F1512; --chip:#222C27;
   --young:#5CD08F; --young-bg:#163626; --prime:#E9B154; --prime-bg:#3A2D14; --aging:#F07B6E; --aging-bg:#3F1E1A;
   --t1:#1E3350; --t2:#1C3A28; --t3:#3D3418; --t4:#43281C; --t5:#33243F; --t6:#2C2C2C; color-scheme:dark}
+/* Skins: "rex" (Shermonic, green) is the default; "trike" (FN) swaps in a soft red palette and the triceratops */
+:root{--accent-2:#2E8F63;--horn:#F1E6CF}
+:root[data-skin="trike"]{
+  --bg:#161112; --surface:#201819; --ink:#EFE8E8; --muted:#A79A9C; --line:#382C2D;
+  --accent:#E2837A; --accent-2:#B8615A; --accent-ink:#161112; --chip:#2B2122}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font:15px/1.45 var(--f-body)}
 .wrap{max-width:1100px;margin:0 auto;padding-inline:16px;padding-block:0 96px}
@@ -141,6 +146,7 @@ tr:last-child td{border-bottom:0}
 .slotc{background:var(--bg);border-radius:10px;padding:10px 12px;display:grid;grid-template-columns:auto 1fr;gap:0 10px;align-items:center}
 .slotc .no{font:800 30px/1 var(--f-display);color:var(--accent);grid-row:span 2}
 .slotc .nm{font:800 19px/1.1 var(--f-display);text-transform:uppercase}
+.slotc.po .no{color:var(--muted)}
 tr.cut td{border-bottom:2px solid var(--accent)}
 /* trades */
 .idea{padding:14px;display:grid;gap:10px}
@@ -207,7 +213,31 @@ function rex(){
     <path d="M45 23.5h15.5M44.5 28.5h16M52 23.5v5M60.5 23.5v5" stroke="var(--muted)" stroke-width="1.7" stroke-linecap="round" fill="none"/>
   </g>`;
 }
-document.getElementById("logo").innerHTML = rex();
+function trike(){
+  return `<g>
+  <path d="M3 41c5 2 9 1 12-2l3 7c-6 3-11 1-15-5z" fill="var(--accent)"/>
+  <ellipse cx="26" cy="42" rx="16" ry="11" fill="var(--accent)"/>
+  <rect x="13" y="47" width="6" height="11" rx="3" fill="var(--accent)"/>
+  <rect x="21" y="49" width="6" height="10" rx="3" fill="var(--accent-2)"/>
+  <rect x="30" y="49" width="6" height="10" rx="3" fill="var(--accent-2)"/>
+  <rect x="35" y="47" width="6" height="11" rx="3" fill="var(--accent)"/>
+  <path d="M30 32c0-12 9-20 18-19 1 0 1.5 1 1 2-2 3-1.5 7 1 9l-6 13c-6 2-11 0-14-5z" fill="var(--accent-2)"/>
+  <path d="M31.5 30c1-6 4-10 8-12M33 35c0-3 1-5 3-7" stroke="var(--accent)" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".7"/>
+  <rect x="38" y="24" width="22" height="16" rx="8" fill="var(--accent)"/>
+  <path d="M58 30l5.5 2.5-5.5 3z" fill="var(--accent)"/>
+  <path d="M59 26.5l1.5-5 2 5.5z" fill="var(--horn)"/>
+  <path d="M38 27c-.5-7 4-12 10-12.5 4.5-.3 8 1.5 9.5 5l-1 4.5H44l-4 6.5z" fill="var(--ink)"/>
+  <path d="M46 16.5l3.5-9 1.5 9.5zM53 18l5-7.5-.5 9z" fill="var(--horn)"/>
+  <path d="M43 17.5c2.5-1.5 6-2 9-1.3" stroke="var(--accent)" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+  <circle cx="51" cy="28.5" r="2.4" fill="var(--surface)"/><circle cx="51.7" cy="28.6" r="1.2" fill="var(--ink)"/>
+  <circle cx="42" cy="23" r="2.1" fill="var(--surface)"/>
+  <path d="M47 35.5c3.5 1.3 8 1.2 11.5-.6" stroke="var(--ink)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <path d="M45 30.5h17.5M45 34h17M53 30.5v3.5M61.5 30.5v3.5" stroke="var(--muted)" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+</g>`;
+}
+const SKIN = document.documentElement.dataset.skin || "rex";
+const mascot = SKIN === "trike" ? trike : rex;
+document.getElementById("logo").innerHTML = mascot();
 
 const DATA_EL = document.getElementById("dv-data");
 let D = null;
@@ -219,7 +249,7 @@ const TABS = [
   ["history", "History", '<path d="M8 4h8v4a4 4 0 0 1-8 0zM6 5H3a3 3 0 0 0 5 3M18 5h3a3 3 0 0 1-5 3M12 12v4M8 20h8M9 16h6v4H9z"/>'],
 ];
 const st = { tab: "teams", team: null, h2h: null };
-try { const h = location.hash.slice(1); if (TABS.some(t => t[0] === h)) st.tab = h; st.team = localStorage.getItem("dv_team"); } catch (e) {}
+try { const h = location.hash.slice(1); if (TABS.some(t => t[0] === h)) st.tab = h; } catch (e) {}
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const save = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
@@ -237,7 +267,8 @@ const ordinal = (n) => n + (n % 10 === 1 && n % 100 !== 11 ? "st" : n % 10 === 2
 function avgAge(players, pos){ const a = players.filter(p => p.age != null && p.pos !== "K" && p.pos !== "DST" && (!pos || p.pos === pos)).map(p => p.age); return a.length ? a.reduce((s, x) => s + x, 0) / a.length : null; }
 function renderTeams(){
   const T = byRid(); const teams = D.teams;
-  if (!teams.some(t => String(t.rid) === String(st.team))) st.team = teams[0].rid;
+  if (st.team == null) { try { st.team = localStorage.getItem("dv_team_" + D.league.id); } catch (e) {} }
+  if (!teams.some(t => String(t.rid) === String(st.team))) st.team = (teams.find(t => t.name === D.league.default_team) || teams[0]).rid;
   const t = teams.find(x => String(x.rid) === String(st.team));
   const rec = `${t.w}-${t.l}${t.t ? "-" + t.t : ""}`;
   const myAge = avgAge(t.players);
@@ -246,7 +277,7 @@ function renderTeams(){
   h += `<section class="card"><div class="hero"><div class="nm">${esc(t.name)}</div><div style="text-align:right">${tagHtml(t.label)}</div><div class="tm">${esc(t.team)}</div></div>
     <div class="stats"><div>Record<b>${rec}</b></div><div>Points<b>${Math.round(t.pf)}</b></div><div>Win‑now<b>#${t.now_rank}</b></div><div>Future<b>#${t.fut_rank}</b></div><div>Avg age<b>${myAge != null ? myAge.toFixed(1) : "–"}</b><small>${ageRank ? ordinal(ageRank) + " youngest" : ""}</small></div></div></section>`;
   h += `<section><div class="card-h" style="padding:0 2px 8px;border:0"><h3>Position strength</h3><small>rank in the league</small></div><div class="needs">${["QB","RB","WR","TE"].map(p => { const n = t.needs[p]; return `<div class="need ${n.tag}"><div class="p">${p}</div><div class="s">${esc(n.tag)}</div><div class="c">#${n.rank} of ${D.league.teams}</div><div class="c">avg ${avgAge(t.players, p) != null ? avgAge(t.players, p).toFixed(1) : "–"} yrs</div></div>`; }).join("")}</div>
-    <p class="sub" style="margin:8px 2px 0">Compares each team's top QB, top 3 RBs, top 3 WRs and top TE, with the best player counting most. Value is 70% this season, 30% long-term. Bench depth and IR don't count.</p></section>`;
+    <p class="sub" style="margin:8px 2px 0">Compares each team's top ${D.league.sflex ? "2 QBs" : "QB"}, top 3 RBs, top 3 WRs and top TE, with the best player counting most. Value is 70% this season, 30% long-term. Bench depth and IR don't count.</p></section>`;
   h += `<div class="legend"><span><i></i>Possible starter</span><span>Age colors: green young · amber prime · red past prime</span><span>Value = consensus dynasty value: FantasyCalc (FC) and DynastyProcess (DP) rankings averaged, priced on FantasyCalc's trade-market scale</span></div><div class="grid">`;
   for (const pos of ["QB","RB","WR","TE","K","DST"]) {
     const ps = t.players.filter(p => p.pos === pos); if (!ps.length) continue;
@@ -306,9 +337,9 @@ function renderLeague(){
   h += `<section class="card"><div class="chart">${scatter()}</div><div class="legend" style="padding:0 14px 12px">${["All-in","Frisky","Rebuilding"].map(l => tagHtml(l)).join("")}</div></section>`;
   h += `<section class="card"><div class="card-h"><h3>Position strength</h3><small>rank in the league</small></div><div class="tbl"><table><thead><tr><th>Team</th><th>Window</th>${["QB","RB","WR","TE"].map(p => `<th class="c">${p}</th>`).join("")}</tr></thead><tbody>${order.map(t => `<tr><td><b>${esc(t.name)}</b></td><td>${tagHtml(lab(t.label))}</td>${["QB","RB","WR","TE"].map(p => { const n = t.needs[p]; const c = n.tag === "Weak" ? "N" : n.tag === "Strong" ? "S" : "K"; return `<td class="c"><span class="cell ${c}">#${n.rank}</span></td>`; }).join("")}</tr>`).join("")}</tbody></table></div></section>`;
   const R = D.draft_race; const stand = [...D.teams].sort((a, b) => a.standing - b.standing);
-  h += `<section class="card"><div class="card-h"><h3>Draft race</h3><small>picks 1–${R.order.length}, as of week ${D.league.week}</small></div>
-    <div style="padding:12px 14px 4px" class="sub">${R.by === "standings" ? "Teams that miss the playoffs pick in reverse order of the standings: worst record first, ties broken by fewest points." : "Teams that miss the playoffs pick in order of fewest max possible points (Sleeper's best-possible-lineup total), so tanking doesn't help."}</div>
-    <div class="race">${R.order.map((rid, i) => { const t = T[rid]; return `<div class="slotc"><div class="no">${i + 1}</div><div class="nm">${esc(t.name)}</div><div class="mono sub">${R.by === "standings" ? `${t.w}-${t.l}` : `${Math.round(t.max_pf)} max pts`}</div></div>`; }).join("")}</div>
+  h += `<section class="card"><div class="card-h"><h3>Draft race</h3><small>projected order, as of week ${D.league.week}</small></div>
+    <div style="padding:12px 14px 4px" class="sub">${R.by === "standings" ? `Picks 1–${R.order.length}: teams that miss the playoffs, worst record first (ties: fewest points).` : `Picks 1–${R.order.length}: teams that miss the playoffs, fewest max possible points first (Sleeper's best-possible-lineup total), so tanking doesn't help.`} Picks ${R.order.length + 1}–${D.league.teams}: playoff teams by playoff finish, champion last${R.rest_basis === "playoff finish" ? "" : " (projected by win-now strength until the playoffs end)"}.</div>
+    <div class="race">${(R.projected || R.order).map((rid, i) => { const t = T[rid]; const po = i >= R.order.length; return `<div class="slotc${po ? " po" : ""}"><div class="no">${i + 1}</div><div class="nm">${esc(t.name)}</div><div class="mono sub">${po ? (R.rest_basis === "playoff finish" ? "playoffs" : "playoff team") : R.by === "standings" ? `${t.w}-${t.l}` : `${Math.round(t.max_pf)} max pts`}</div></div>`; }).join("")}</div>
     <div class="tbl"><table><thead><tr><th>#</th><th>Team</th><th class="num">W-L</th><th class="num">Pts</th><th class="num">Max pts</th></tr></thead><tbody>${stand.map(t => `<tr${t.standing === R.playoff_teams ? ' class="cut"' : ""}><td class="mono">${t.standing}</td><td><b>${esc(t.name)}</b></td><td class="num">${t.w}-${t.l}</td><td class="num">${Math.round(t.pf)}</td><td class="num">${Math.round(t.max_pf)}</td></tr>`).join("")}</tbody></table></div>
     <p class="sub" style="padding:0 14px 12px;margin:0">Line marks the playoff cut (top ${R.playoff_teams}). Standings sorted by wins, then points.</p></section>`;
   const yrs = [...new Set(D.teams.flatMap(t => t.picks.map(p => p.yr)))].sort();
@@ -370,7 +401,7 @@ function tabsHtml(bottom){
   return TABS.map(([id, label, icon]) => `<button type="button" role="tab" data-tab="${id}" aria-selected="${st.tab === id}">${bottom ? `<svg viewBox="0 0 24 24" aria-hidden="true">${icon}</svg>` : ""}${label}</button>`).join("");
 }
 function render(){
-  if (!D) { $("panel").innerHTML = `<section class="card"><div class="block"><svg viewBox="0 0 64 64">${rex()}</svg><div><h3>Loading the league…</h3><p>If this sticks, refresh the page.</p></div></div></section>`; return; }
+  if (!D) { $("panel").innerHTML = `<section class="card"><div class="block"><svg viewBox="0 0 64 64">${mascot()}</svg><div><h3>Loading the league…</h3><p>If this sticks, refresh the page.</p></div></div></section>`; return; }
   $("lg").textContent = `${D.league.name} · ${D.league.format}`;
   $("toptabs").innerHTML = tabsHtml(false); $("bottom").innerHTML = tabsHtml(true);
   $("panel").innerHTML = st.tab === "league" ? renderLeague() : st.tab === "trades" ? renderTrades() : st.tab === "history" ? renderHistory() : renderTeams();
@@ -388,7 +419,7 @@ document.addEventListener("click", (e) => {
   if (b) { st.tab = b.dataset.tab; try { history.replaceState(null, "", "#" + st.tab); } catch (err) {} render(); window.scrollTo({top: 0}); }
 });
 document.addEventListener("change", (e) => {
-  if (e.target.id === "teamSel") { st.team = e.target.value; save("dv_team", st.team); render(); }
+  if (e.target.id === "teamSel") { st.team = e.target.value; save("dv_team_" + D.league.id, st.team); render(); }
   if (e.target.id === "tradeSel") { st.tradeTeam = e.target.value; render(); }
 });
 render();
