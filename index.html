@@ -79,7 +79,7 @@ h3{font:800 19px/1 var(--f-display);text-transform:uppercase;letter-spacing:.04e
 .card-h small{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;align-items:start}
 .tag{display:inline-block;font:700 12px/1 var(--f-display);text-transform:uppercase;letter-spacing:.07em;padding:5px 8px;border-radius:999px;white-space:nowrap}
-.L-All-in{background:var(--accent);color:var(--accent-ink)}
+.L-Competing{background:var(--accent);color:var(--accent-ink)}
 .L-Frisky{background:var(--t3);color:var(--ink)}
 .L-Rebuilding{background:var(--t5);color:var(--ink)}
 .mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
@@ -312,7 +312,7 @@ function scatter(){
   const pad = (a) => { const lo = Math.min(...a), hi = Math.max(...a), s = (hi - lo) * .12 || 1; return [lo - s, hi + s]; };
   const [x0, x1] = pad(xs), [y0, y1] = pad(ys);
   const X = (v) => P.l + (v - x0) / (x1 - x0) * (W - P.l - P.r), Y = (v) => H - P.b - (v - y0) / (y1 - y0) * (H - P.t - P.b);
-  const fill = {"All-in": "var(--accent)", "Frisky": "var(--t3)", "Rebuilding": "var(--t5)"};
+  const fill = {"Competing": "var(--accent)", "Frisky": "var(--t3)", "Rebuilding": "var(--t5)"};
   let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Teams plotted by win-now strength and future value">`;
   s += `<line x1="${X(0)}" y1="${P.t}" x2="${X(0)}" y2="${H - P.b}" stroke="var(--line)" stroke-dasharray="4 4"/><line x1="${P.l}" y1="${Y(0)}" x2="${W - P.r}" y2="${Y(0)}" stroke="var(--line)" stroke-dasharray="4 4"/>`;
   s += `<text x="${W - P.r}" y="${P.t + 4}" text-anchor="end" font-size="11" fill="var(--muted)">strong now · strong future</text>`;
@@ -333,8 +333,8 @@ function scatter(){
 function renderLeague(){
   const T = byRid();
   const order = [...D.teams].sort((a, b) => a.now_rank - b.now_rank);
-  let h = `<section><h2>Who's in what window</h2><p class="sub" style="margin:4px 0 0">Win-now = best possible starting lineup by this season's values, plus points scored so far. Future = value of players 25 and under plus draft picks. Trades from the last 90 days can move a team one tier: buying win-now players with picks and youth pushes toward All-in, selling pushes toward Rebuilding.</p></section>`;
-  h += `<section class="card"><div class="chart">${scatter()}</div><div class="legend" style="padding:0 14px 12px">${["All-in","Frisky","Rebuilding"].map(l => tagHtml(l)).join("")}</div></section>`;
+  let h = `<section><h2>Who's in what window</h2><p class="sub" style="margin:4px 0 0">Win-now = best possible starting lineup by this season's values, plus points scored so far. Future = value of players 25 and under plus draft picks. Trades from the last 90 days can move a team one tier: buying win-now players with picks and youth pushes toward Competing, selling pushes toward Rebuilding.</p></section>`;
+  h += `<section class="card"><div class="chart">${scatter()}</div><div class="legend" style="padding:0 14px 12px">${["Competing","Frisky","Rebuilding"].map(l => tagHtml(l)).join("")}</div></section>`;
   h += `<section class="card"><div class="card-h"><h3>Position strength</h3><small>rank in the league</small></div><div class="tbl"><table><thead><tr><th>Team</th><th>Window</th>${["QB","RB","WR","TE"].map(p => `<th class="c">${p}</th>`).join("")}</tr></thead><tbody>${order.map(t => `<tr><td><b>${esc(t.name)}</b></td><td>${tagHtml(lab(t.label))}</td>${["QB","RB","WR","TE"].map(p => { const n = t.needs[p]; const c = n.tag === "Weak" ? "N" : n.tag === "Strong" ? "S" : "K"; return `<td class="c"><span class="cell ${c}">#${n.rank}</span></td>`; }).join("")}</tr>`).join("")}</tbody></table></div></section>`;
   const R = D.draft_race; const stand = [...D.teams].sort((a, b) => a.standing - b.standing);
   h += `<section class="card"><div class="card-h"><h3>Draft race</h3><small>projected order, as of week ${D.league.week}</small></div>
@@ -354,7 +354,7 @@ function renderTrades(){
   const mine = (x) => f === "all" || String(x.seller) === f || String(x.buyer) === f;
   let h = "";
   h += `<div class="picker"><label class="sub" for="tradeSel">Show</label><select id="tradeSel"><option value="all">All teams</option>${D.teams.map(x => `<option value="${x.rid}"${String(x.rid) === f ? " selected" : ""}>${esc(x.name)} · ${esc(x.label)}</option>`).join("")}</select></div>`;
-  const showSale = f === "all" || T[f].label !== "All-in";
+  const showSale = f === "all" || T[f].label !== "Competing";
   if (showSale) {
     const sale = D.for_sale.filter(x => f === "all" || String(x.seller) === f).slice(0, f === "all" ? 10 : 20);
     h += `<section class="card"><div class="card-h"><h3>Sell before it's too late</h3><small>prime and aging starters on Frisky and Rebuilding teams</small></div>`;
@@ -362,7 +362,7 @@ function renderTrades(){
     h += sale.map(x => `<div class="fact"><span><b>${esc(x.player)}</b> <span class="sub">${x.pos}, ${x.age} · ${esc(T[x.seller].name)}</span></span><span>${x.ir ? '<span class="slot">IR</span> ' : ""}<span class="age ${x.window}">${x.window}</span></span><span class="d">${x.shop_to.length ? "Shop to " + x.shop_to.map(r => esc(T[r].name)).join(", ") : "No contender needs him at the moment"} · worth ${fmt(x.market)}</span></div>`).join("");
     h += `</section>`;
   }
-  h += `<section><h2>Trade ideas</h2><p class="sub" style="margin:4px 0 0">Conversation starters, not verdicts. Prices use each player's value plus a contender premium, and buyers pay with picks and young bench players, never their starters.</p></section>`;
+  h += `<section><h2>Trade ideas</h2><p class="sub" style="margin:4px 0 0">Conversation starters, not verdicts. Veterans from teams outside their window, plus spare depth from contenders. Prices use each player's value plus a contender premium, and buyers pay with picks and young bench players, never their starters.</p></section>`;
   let list = D.ideas.filter(mine);
   if (f === "all") { const per = {}, seen = new Set(); list = list.filter(x => { if (seen.has(x.give.label) || (per[x.buyer] || 0) >= 2) return false; seen.add(x.give.label); per[x.buyer] = (per[x.buyer] || 0) + 1; return true; }).slice(0, 10); }
   if (!list.length) h += `<section class="card"><div class="block"><div class="sub">No packages line up for ${f === "all" ? "anyone" : esc(T[f].name)} right now. Check back after the next update.</div></div></section>`;
@@ -372,7 +372,22 @@ function renderTrades(){
     h += `<section class="card idea"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><h3>${esc(s.name)} ⇄ ${esc(b.name)}</h3><span class="sub">${lab(s.label)} → ${lab(b.label)}</span></div>
       <div class="swap"><div class="side"><div class="who">${esc(b.name)} gets</div><ul><li>${esc(x.give.label)}</li></ul><div class="v">worth ${fmt(x.market)} · asking ${fmt(x.ask)}</div></div>
       <div class="side"><div class="who">${esc(s.name)} gets</div><ul>${x.get.map(g => `<li>${esc(g.label)}</li>`).join("")}</ul><div class="v">value ${fmt(x.get_v)}</div></div></div>
-      <ul class="why">${x.why.map(w => `<li>${esc(w)}</li>`).join("")}<li>Includes a contender premium since ${esc(b.name)} is ${esc(b.label)}.</li></ul></section>`;
+      <ul class="why">${x.why.map(w => `<li>${esc(w)}</li>`).join("")}<li>Includes a contender premium since ${esc(b.name)} is ${esc(b.label.toLowerCase())}.</li></ul></section>`;
+  }
+  h += `</div>`;
+  // contender swaps: strength-for-need trades between two non-rebuilding teams
+  const sw = (D.swaps || []).filter(x => f === "all" || String(x.a) === f || String(x.b) === f);
+  h += `<section><h2>Contender swaps</h2><p class="sub" style="margin:4px 0 0">Two teams trading from strength to fill a need, player for player at similar value, with a pick added when one side gets more.</p></section>`;
+  if (!sw.length) h += `<section class="card"><div class="block"><div class="sub">No swaps line up for ${f === "all" ? "anyone" : esc(T[f].name)} right now.</div></div></section>`;
+  h += `<div class="grid">`;
+  for (const x of sw) {
+    const a = T[x.a], b = T[x.b], ex = x.extra;
+    const plus = (rid) => ex && ex.from === rid ? `<li>${esc(ex.label)}</li>` : "";
+    const val = (main, rid) => main + (ex && ex.from === rid ? ex.v : 0);
+    h += `<section class="card idea"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><h3>${esc(a.name)} ⇄ ${esc(b.name)}</h3><span class="sub">${lab(a.label)} · ${lab(b.label)}</span></div>
+      <div class="swap"><div class="side"><div class="who">${esc(a.name)} gets</div><ul><li>${esc(x.b_gives.label)}</li>${plus(x.b)}</ul><div class="v">value ${fmt(val(x.b_gives.v, x.b))}</div></div>
+      <div class="side"><div class="who">${esc(b.name)} gets</div><ul><li>${esc(x.a_gives.label)}</li>${plus(x.a)}</ul><div class="v">value ${fmt(val(x.a_gives.v, x.a))}</div></div></div>
+      <ul class="why">${x.why.map(w => `<li>${esc(w)}</li>`).join("")}</ul></section>`;
   }
   return h + `</div>`;
 }

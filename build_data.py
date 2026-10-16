@@ -377,15 +377,15 @@ def main():
         t = teams[r]; t["now_rank"], t["fut_rank"] = now_rank[r], fut_rank[r]
         b = t["behavior"]
         if now_rank[r] <= top:
-            t["label"] = "All-in"
+            t["label"] = "Competing"
         elif now_rank[r] > bottom:
             t["label"] = "Rebuilding"
         else:
             t["label"] = "Frisky"
         # behavior can move a team one tier
-        if t["label"] == "Frisky" and b >= 0.3: t["label"] = "All-in"
+        if t["label"] == "Frisky" and b >= 0.3: t["label"] = "Competing"
         elif t["label"] == "Frisky" and b <= -0.3: t["label"] = "Rebuilding"
-        elif t["label"] == "All-in" and b <= -0.5: t["label"] = "Frisky"
+        elif t["label"] == "Competing" and b <= -0.5: t["label"] = "Frisky"
         elif t["label"] == "Rebuilding" and b >= 0.5: t["label"] = "Frisky"
         # sliding contender premium: strength now (60%) + how hard they've been buying (40%)
         if t["label"] == "Rebuilding":
@@ -403,16 +403,37 @@ def main():
         if not w or a is None: return ""
         a = int(a)
         return "Young" if a <= w[0] else "Prime" if a <= w[1] else "Aging"
-    PREMIUM = {"All-in": 1.25, "Frisky": 1.15}
-    sellers = [t for t in teams.values() if t["label"] in ("Rebuilding", "Frisky")]
+    PREMIUM = {"Competing": 1.25, "Frisky": 1.15}
+    def mkt(p):
+        return p["rv"] if window(p) == "Aging" else max(p["dv"], p["rv"])
+    def room(t, k):
+        return sorted([q for q in t["players"] if q["pos"] == k and healthy(q) and q.get("slot") != "Taxi"], key=lambda q: -q["rv"])
+    def spares(t, k):
+        """Players a team can move at position k without hurting its lineup much."""
+        g = room(t, k); d = depth_k[k]
+        out = [q for q in g[d:] if q["rv"] > 0]                               # depth beyond the starters
+        if t["needs"][k]["tag"] != "Weak" and len(g) > d and g[d]["rv"] >= 0.6 * g[d - 1]["rv"]:
+            out.append(g[d - 1])                                               # last starter, if the next man up is close
+        return out
+    def upgrade(t, p):
+        g = room(t, p["pos"]); d = depth_k[p["pos"]]
+        kth = g[d - 1]["rv"] if len(g) >= d else 0
+        return p["rv"] - kth if p["rv"] > kth else 0
+    # Sellers: Rebuilding/Frisky teams sell prime/aging starters; Competing teams can move spare depth
+    sellers = list(teams.values())
     buyers = [t for t in teams.values() if t["label"] in PREMIUM]
     for_sale, ideas = [], []
     for s in sellers:
-        cands = [p for p in s["players"] if p["pos"] in SKILL and (p.get("start") or p.get("slot") == "IR") and window(p) in ("Prime", "Aging")
+        depth_ids = {q["id"] for k in SKILL for q in spares(s, k)}
+        if s["label"] == "Competing":
+            cands = [p for p in s["players"] if p["id"] in depth_ids and max(p["rv"], p["dv"]) >= 1500]
+        else:
+            cands = [p for p in s["players"] if p["pos"] in SKILL and (p.get("start") or p.get("slot") == "IR") and window(p) in ("Prime", "Aging")
                  and max(p["rv"], p["dv"]) >= (500 if window(p) == "Aging" else 1500)]
         for p in cands:
             wnd = window(p)
-            urgency = (2 if s["label"] == "Rebuilding" else 1) * (1.5 if wnd == "Aging" else 1.0)
+            depth_sale = s["label"] == "Competing"
+            urgency = 0.6 if depth_sale else (2 if s["label"] == "Rebuilding" else 1) * (1.5 if wnd == "Aging" else 1.0)
             fits = []
             for b in buyers:
                 if b["rid"] == s["rid"]:
@@ -457,23 +478,80 @@ def main():
                 fits.append({"buyer": b["rid"], "gain": gain, "weak": b["needs"][p["pos"]]["tag"] == "Weak", "deal": best,
                              "premium": premium, "market": market, "target": target, "rb": rb_scarcity > 1})
             fits.sort(key=lambda f: (-f["weak"], -f["gain"]))
-            for_sale.append({"seller": s["rid"], "player": f'{p["n"]}', "pos": p["pos"], "age": int(p["age"]), "window": wnd,
-                             "market": round(p["rv"] if wnd == "Aging" else max(p["dv"], p["rv"])), "urgency": urgency,
-                             "shop_to": [f["buyer"] for f in fits[:4]]})
-            for_sale[-1]["ir"] = p.get("slot") == "IR"
+            if not depth_sale:   # the "sell before it's too late" list is for teams outside their window
+                for_sale.append({"seller": s["rid"], "player": f'{p["n"]}', "pos": p["pos"], "age": int(p["age"]), "window": wnd,
+                                 "market": round(p["rv"] if wnd == "Aging" else max(p["dv"], p["rv"])), "urgency": urgency,
+                                 "shop_to": [f["buyer"] for f in fits[:4]], "ir": p.get("slot") == "IR"})
             if p.get("slot") == "IR":
                 continue  # no packaged ideas for injured players
             for f in [f for f in fits if f["deal"]][:2]:
                 b = teams[f["buyer"]]
                 why = [f'{b["name"]} is {"weak" if f["weak"] else "average or better"} at {p["pos"]} (#{b["needs"][p["pos"]]["rank"]} of {teams_n}), and {p["n"]} would start for them']
-                why.append(f'{p["n"]} is {int(p["age"])}, {"past his prime window" if wnd == "Aging" else "in his prime window"} on a {s["label"].lower()} team')
+                if depth_sale:
+                    order_ids = [q["id"] for q in room(s, p["pos"])]
+                    nth = order_ids.index(p["id"]) + 1 if p["id"] in order_ids else 0
+                    rm = room(s, p["pos"])
+                    nxt = rm[depth_k[p["pos"]]]["n"] if nth and nth <= depth_k[p["pos"]] and len(rm) > depth_k[p["pos"]] else ""
+                    which = (f' and {p["n"]} is their {ordn.get(nth, f"{nth}th")} {p["pos"]}' + (f', with {nxt} ready to step in' if nxt else "")) if nth else ""
+                    why.append(f'{s["name"]} is deep at {p["pos"]} (#{s["needs"][p["pos"]]["rank"]} of {teams_n}){which}, so they can cash in depth')
+                else:
+                    why.append(f'{p["n"]} is {int(p["age"])}, {"past his prime window" if wnd == "Aging" else "in his prime window"} on a {s["label"].lower()} team')
                 if f.get("rb"): why.append("Starting RBs carry a 15% scarcity bump")
-                ideas.append({"seller": s["rid"], "buyer": b["rid"], "give": {"label": f'{p["n"]} ({p["pos"]}, {int(p["age"])})', "v": p["dv"]},
+                ideas.append({"kind": "depth" if depth_sale else "sell", "seller": s["rid"], "buyer": b["rid"], "give": {"label": f'{p["n"]} ({p["pos"]}, {int(p["age"])})', "v": p["dv"]},
                               "get": [{"label": c["label"], "v": c["v"]} for c in f["deal"][1]], "get_v": f["deal"][2], "why": why,
                               "market": round(f["market"]), "ask": round(f["target"]), "premium": round((f["premium"] - 1) * 100),
                               "fit": urgency * f["market"] * (1.3 if f["weak"] else 1)})
     ideas.sort(key=lambda x: -x["fit"])
-    out_ideas = ideas[:40]
+    out_ideas = ideas[:60]
+
+    # ---------- contender swaps: two non-rebuilding teams trade from strength to fill a need ----------
+    # A gives a player at a position where they're deep; B gives one back at a position where B is deep
+    # and A is thin. Both players must crack the other team's lineup. Values are kept within ~15%,
+    # with a pick added from the side getting more when the gap is bigger.
+    contenders = [t for t in teams.values() if t["label"] in ("Competing", "Frisky")]
+    swaps = []
+    for a, b in itertools.combinations(contenders, 2):
+        for x in SKILL:
+            for y in SKILL:
+                if x == y: continue
+                # a is deeper than b at x; b is deeper than a at y
+                if not (a["needs"][x]["rank"] < b["needs"][x]["rank"] and b["needs"][y]["rank"] < a["needs"][y]["rank"]): continue
+                for p in spares(a, x):
+                    gb = upgrade(b, p)
+                    if not gb: continue
+                    for q in spares(b, y):
+                        ga = upgrade(a, q)
+                        if not ga: continue
+                        vp, vq = mkt(p), mkt(q)
+                        if min(vp, vq) < 800: continue
+                        hi, lo = max(vp, vq), min(vp, vq)
+                        extra = None
+                        if hi - lo > 0.15 * hi:
+                            if hi - lo > 0.45 * hi: continue
+                            payer = b if vp > vq else a       # the side receiving more value adds a pick
+                            gap = hi - lo
+                            opts = [k for k in payer["picks"] if 0 < k["v"] <= gap * 1.4 and k["v"] >= gap * 0.5]
+                            if not opts: continue
+                            k = min(opts, key=lambda k: abs(k["v"] - gap))
+                            extra = {"from": payer["rid"], "label": f'{k["yr"]} {ordn[k["rd"]]}' + (f' ({k["proj"]})' if k["proj"] else "")
+                                     + ("" if k["from"] == payer["rid"] else f' via {teams[k["from"]]["name"]}'), "v": k["v"]}
+                        score = (ga + gb) * (1.3 if a["needs"][y]["tag"] == "Weak" else 1) * (1.3 if b["needs"][x]["tag"] == "Weak" else 1)
+                        swaps.append({"a": a["rid"], "b": b["rid"],
+                                      "a_gives": {"label": f'{p["n"]} ({p["pos"]}, {int(p["age"])})', "v": round(vp), "pid": p["id"]},
+                                      "b_gives": {"label": f'{q["n"]} ({q["pos"]}, {int(q["age"])})', "v": round(vq), "pid": q["id"]},
+                                      "extra": extra,
+                                      "why": [f'{a["name"]} is #{a["needs"][x]["rank"]} at {x} and #{a["needs"][y]["rank"]} at {y}; {b["name"]} is #{b["needs"][x]["rank"]} at {x} and #{b["needs"][y]["rank"]} at {y}',
+                                              f'{p["n"]} would start for {b["name"]}, and {q["n"]} would start for {a["name"]}'],
+                                      "score": score})
+    swaps.sort(key=lambda s_: -s_["score"])
+    used_p, per_team, out_swaps = set(), {}, []
+    for s_ in swaps:
+        if s_["a_gives"]["pid"] in used_p or s_["b_gives"]["pid"] in used_p: continue
+        if per_team.get(s_["a"], 0) >= 4 or per_team.get(s_["b"], 0) >= 4: continue
+        used_p |= {s_["a_gives"]["pid"], s_["b_gives"]["pid"]}
+        per_team[s_["a"]] = per_team.get(s_["a"], 0) + 1; per_team[s_["b"]] = per_team.get(s_["b"], 0) + 1
+        s_["score"] = round(s_["score"]); out_swaps.append(s_)
+        if len(out_swaps) >= 20: break
     for_sale.sort(key=lambda x: -(x["urgency"] * x["market"]))
 
     # ---------- history ----------
@@ -488,6 +566,7 @@ def main():
                    "slots": slots, "flex": flex, "sflex": sflex},
         "teams": sorted(teams.values(), key=lambda t: t["name"].lower()),
         "ideas": out_ideas,
+        "swaps": out_swaps,
         "for_sale": for_sale,
         "draft_race": draft_race,
         "history": hist,
