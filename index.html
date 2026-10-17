@@ -147,6 +147,7 @@ tr:last-child td{border-bottom:0}
 .slotc .no{font:800 30px/1 var(--f-display);color:var(--accent);grid-row:span 2}
 .slotc .nm{font:800 19px/1.1 var(--f-display);text-transform:uppercase}
 .slotc.po .no{color:var(--muted)}
+.slotc .via{grid-column:2;font:700 12px/1.3 var(--f-body);color:var(--accent);margin-top:2px}
 tr.cut td{border-bottom:2px solid var(--accent)}
 /* trades */
 .idea{padding:14px;display:grid;gap:10px}
@@ -336,10 +337,12 @@ function renderLeague(){
   let h = `<section><h2>Who's in what window</h2><p class="sub" style="margin:4px 0 0">Win-now = best possible starting lineup by this season's values, plus points scored so far. Future = value of players 25 and under plus draft picks. Trades from the last 90 days can move a team one tier: buying win-now players with picks and youth pushes toward Competing, selling pushes toward Rebuilding.</p></section>`;
   h += `<section class="card"><div class="chart">${scatter()}</div><div class="legend" style="padding:0 14px 12px">${["Competing","Frisky","Rebuilding"].map(l => tagHtml(l)).join("")}</div></section>`;
   h += `<section class="card"><div class="card-h"><h3>Position strength</h3><small>rank in the league</small></div><div class="tbl"><table><thead><tr><th>Team</th><th>Window</th>${["QB","RB","WR","TE"].map(p => `<th class="c">${p}</th>`).join("")}</tr></thead><tbody>${order.map(t => `<tr><td><b>${esc(t.name)}</b></td><td>${tagHtml(lab(t.label))}</td>${["QB","RB","WR","TE"].map(p => { const n = t.needs[p]; const c = n.tag === "Weak" ? "N" : n.tag === "Strong" ? "S" : "K"; return `<td class="c"><span class="cell ${c}">#${n.rank}</span></td>`; }).join("")}</tr>`).join("")}</tbody></table></div></section>`;
-  const R = D.draft_race; const stand = [...D.teams].sort((a, b) => a.standing - b.standing);
-  h += `<section class="card"><div class="card-h"><h3>Draft race</h3><small>projected order, as of week ${D.league.week}</small></div>
+  const R = D.draft_race;
+  const nextYr = Math.min(...D.teams.flatMap(t => t.picks.map(p => p.yr)));
+  const holder1st = (orig) => { const h = D.teams.find(t => t.picks.some(p => p.yr === nextYr && p.rd === 1 && p.from === orig)); return h ? h.rid : null; }; const stand = [...D.teams].sort((a, b) => a.standing - b.standing);
+  h += `<section class="card"><div class="card-h"><h3>Draft race</h3><small>projected ${nextYr} 1st-round order, as of week ${D.league.week}</small></div>
     <div style="padding:12px 14px 4px" class="sub">${R.by === "standings" ? `Picks 1–${R.order.length}: teams that miss the playoffs, worst record first (ties: fewest points).` : `Picks 1–${R.order.length}: teams that miss the playoffs, fewest max possible points first (Sleeper's best-possible-lineup total), so tanking doesn't help.`} Picks ${R.order.length + 1}–${D.league.teams}: playoff teams by playoff finish, champion last${R.rest_basis === "playoff finish" ? "" : " (projected by win-now strength until the playoffs end)"}.</div>
-    <div class="race">${(R.projected || R.order).map((rid, i) => { const t = T[rid]; const po = i >= R.order.length; return `<div class="slotc${po ? " po" : ""}"><div class="no">${i + 1}</div><div class="nm">${esc(t.name)}</div><div class="mono sub">${po ? (R.rest_basis === "playoff finish" ? "playoffs" : "playoff team") : R.by === "standings" ? `${t.w}-${t.l}` : `${Math.round(t.max_pf)} max pts`}</div></div>`; }).join("")}</div>
+    <div class="race">${(R.projected || R.order).map((rid, i) => { const t = T[rid]; const po = i >= R.order.length; const hold = holder1st(rid); return `<div class="slotc${po ? " po" : ""}"><div class="no">${i + 1}</div><div class="nm">${esc(t.name)}</div><div class="mono sub">${po ? (R.rest_basis === "playoff finish" ? "playoffs" : "playoff team") : R.by === "standings" ? `${t.w}-${t.l}` : `${Math.round(t.max_pf)} max pts`}</div>${hold && hold !== rid ? `<div class="via">${esc(T[hold].name)} picks</div>` : ""}</div>`; }).join("")}</div>
     <div class="tbl"><table><thead><tr><th>#</th><th>Team</th><th class="num">W-L</th><th class="num">Pts</th><th class="num">Max pts</th></tr></thead><tbody>${stand.map(t => `<tr${t.standing === R.playoff_teams ? ' class="cut"' : ""}><td class="mono">${t.standing}</td><td><b>${esc(t.name)}</b></td><td class="num">${t.w}-${t.l}</td><td class="num">${Math.round(t.pf)}</td><td class="num">${Math.round(t.max_pf)}</td></tr>`).join("")}</tbody></table></div>
     <p class="sub" style="padding:0 14px 12px;margin:0">Line marks the playoff cut (top ${R.playoff_teams}). Standings sorted by wins, then points.</p></section>`;
   const yrs = [...new Set(D.teams.flatMap(t => t.picks.map(p => p.yr)))].sort();
