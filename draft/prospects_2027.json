@@ -1,0 +1,553 @@
+{
+ "class": 2027,
+ "draft_day": "2027-04-29",
+ "note": "One entry per prospect. Next year: replace this file with the 2028 class (or add prospects_2028.json and point build_draft.py at it).",
+ "default_order": {
+  "sf": [
+   "Jeremiah Smith",
+   "Dante Moore",
+   "Trinidad Chambliss",
+   "Cam Coleman",
+   "Darian Mensah",
+   "Charlie Becker",
+   "Jadan Baugh",
+   "KJ Duff",
+   "Kewan Lacy",
+   "Arch Manning",
+   "Jamari Johnson",
+   "Nick Marsh",
+   "Trey'Dez Green",
+   "Reed Harris",
+   "Ahmad Hardy",
+   "Drew Mestemaker",
+   "CJ Carr",
+   "Ryan Coleman-Williams",
+   "Bryant Wesco Jr.",
+   "Mark Fletcher Jr.",
+   "Antwan Raymond",
+   "Jayden Maiava",
+   "LJ Martin",
+   "LaNorris Sellers",
+   "Conner Weigman",
+   "Julian Sayin",
+   "Isaiah Sategna III",
+   "Omarion Miller",
+   "Cameron Dickey",
+   "Mario Craver",
+   "Duce Robinson",
+   "Raleek Brown",
+   "Deuce Alexander",
+   "TJ Moore",
+   "Wayne Knight",
+   "DJ Vonnahme",
+   "Amare Thomas",
+   "Nate Frazier",
+   "Ryan Wingo",
+   "Cam Cook",
+   "Terrance Carter Jr.",
+   "Eugene Wilson III",
+   "Brendan Sorsby",
+   "Isaac Brown",
+   "Nico Iamaleava",
+   "Hollywood Smothers",
+   "Rocky Beers",
+   "Wyatt Young",
+   "Jackson Harris",
+   "Emmett Mosley V",
+   "Junior Sherrill",
+   "Nyck Harbor",
+   "Justice Haynes",
+   "Fluff Bothwell",
+   "Luke Reynolds",
+   "Benjamin Brahmer",
+   "Dorian Thomas",
+   "Luke Hasz",
+   "Turbo Richard",
+   "Luke Dehnicke"
+  ],
+  "1qb": [
+   "Jeremiah Smith",
+   "Cam Coleman",
+   "Charlie Becker",
+   "Jadan Baugh",
+   "KJ Duff",
+   "Kewan Lacy",
+   "Jamari Johnson",
+   "Nick Marsh",
+   "Trey'Dez Green",
+   "Reed Harris",
+   "Ahmad Hardy",
+   "Ryan Coleman-Williams",
+   "Dante Moore",
+   "Trinidad Chambliss",
+   "Bryant Wesco Jr.",
+   "Mark Fletcher Jr.",
+   "Darian Mensah",
+   "Antwan Raymond",
+   "LJ Martin",
+   "Arch Manning",
+   "Isaiah Sategna III",
+   "Omarion Miller",
+   "Cameron Dickey",
+   "Drew Mestemaker",
+   "CJ Carr",
+   "Mario Craver",
+   "Duce Robinson",
+   "Raleek Brown",
+   "Deuce Alexander",
+   "TJ Moore",
+   "Wayne Knight",
+   "DJ Vonnahme",
+   "Amare Thomas",
+   "Nate Frazier",
+   "Ryan Wingo",
+   "Jayden Maiava",
+   "Cam Cook",
+   "Terrance Carter Jr.",
+   "LaNorris Sellers",
+   "Conner Weigman",
+   "Eugene Wilson III",
+   "Isaac Brown",
+   "Hollywood Smothers",
+   "Julian Sayin",
+   "Rocky Beers",
+   "Wyatt Young",
+   "Jackson Harris",
+   "Emmett Mosley V",
+   "Junior Sherrill",
+   "Nyck Harbor",
+   "Justice Haynes",
+   "Fluff Bothwell",
+   "Luke Reynolds",
+   "Benjamin Brahmer",
+   "Dorian Thomas",
+   "Luke Hasz",
+   "Turbo Richard",
+   "Luke Dehnicke",
+   "Brendan Sorsby",
+   "Nico Iamaleava"
+  ]
+ },
+ "players": [
+  {
+   "name": "Jeremiah Smith",
+   "pos": "WR",
+   "school": "Ohio State",
+   "dob": "2005-11-29",
+   "espn_id": "5079720"
+  },
+  {
+   "name": "Dante Moore",
+   "pos": "QB",
+   "school": "Oregon",
+   "dob": "2005-05-24",
+   "espn_id": "4870921"
+  },
+  {
+   "name": "Trinidad Chambliss",
+   "pos": "QB",
+   "school": "Ole Miss",
+   "dob": "2002-08-24",
+   "espn_id": "4911529"
+  },
+  {
+   "name": "Cam Coleman",
+   "pos": "WR",
+   "school": "Texas",
+   "dob": "2006-08-14",
+   "espn_id": "5079376"
+  },
+  {
+   "name": "Darian Mensah",
+   "pos": "QB",
+   "school": "Miami",
+   "dob": "2005-01-25",
+   "espn_id": "5121169"
+  },
+  {
+   "name": "Charlie Becker",
+   "pos": "WR",
+   "school": "Indiana",
+   "dob": "",
+   "espn_id": "5146735"
+  },
+  {
+   "name": "Jadan Baugh",
+   "pos": "RB",
+   "school": "Florida",
+   "dob": "",
+   "espn_id": "5079322"
+  },
+  {
+   "name": "KJ Duff",
+   "pos": "WR",
+   "school": "Rutgers",
+   "dob": "2005-12-06",
+   "espn_id": "5084771"
+  },
+  {
+   "name": "Kewan Lacy",
+   "pos": "RB",
+   "school": "Ole Miss",
+   "dob": "2006-07-06",
+   "espn_id": "5086388"
+  },
+  {
+   "name": "Arch Manning",
+   "pos": "QB",
+   "school": "Texas",
+   "dob": "2004-04-27",
+   "espn_id": "4870906"
+  },
+  {
+   "name": "Jamari Johnson",
+   "pos": "TE",
+   "school": "Oregon",
+   "dob": "",
+   "espn_id": "4922988"
+  },
+  {
+   "name": "Nick Marsh",
+   "pos": "WR",
+   "school": "Indiana",
+   "dob": "2006-10-01",
+   "espn_id": "5079600"
+  },
+  {
+   "name": "Trey'Dez Green",
+   "pos": "TE",
+   "school": "LSU",
+   "dob": "",
+   "espn_id": "5079420"
+  },
+  {
+   "name": "Reed Harris",
+   "pos": "WR",
+   "school": "Arizona State",
+   "dob": "",
+   "espn_id": "5031157"
+  },
+  {
+   "name": "Ahmad Hardy",
+   "pos": "RB",
+   "school": "Missouri",
+   "dob": "2005-12-19",
+   "espn_id": "5197065"
+  },
+  {
+   "name": "Drew Mestemaker",
+   "pos": "QB",
+   "school": "Oklahoma State",
+   "dob": "",
+   "espn_id": "5219834"
+  },
+  {
+   "name": "CJ Carr",
+   "pos": "QB",
+   "school": "Notre Dame",
+   "dob": "2005-05-26",
+   "espn_id": "5079369"
+  },
+  {
+   "name": "Ryan Coleman-Williams",
+   "pos": "WR",
+   "school": "Alabama",
+   "dob": "2007-02-09",
+   "espn_id": "5141711"
+  },
+  {
+   "name": "Bryant Wesco Jr.",
+   "pos": "WR",
+   "school": "Clemson",
+   "dob": "2005-09-22",
+   "espn_id": "5112674"
+  },
+  {
+   "name": "Mark Fletcher Jr.",
+   "pos": "RB",
+   "school": "Miami",
+   "dob": "2004-10-17",
+   "espn_id": "4870736"
+  },
+  {
+   "name": "Antwan Raymond",
+   "pos": "RB",
+   "school": "Rutgers",
+   "dob": "2005-07-13",
+   "espn_id": "5209945"
+  },
+  {
+   "name": "Jayden Maiava",
+   "pos": "QB",
+   "school": "USC",
+   "dob": "2004-04-06",
+   "espn_id": "4685454"
+  },
+  {
+   "name": "LJ Martin",
+   "pos": "RB",
+   "school": "BYU",
+   "dob": "",
+   "espn_id": "4918126"
+  },
+  {
+   "name": "LaNorris Sellers",
+   "pos": "QB",
+   "school": "South Carolina",
+   "dob": "2005-06-23",
+   "espn_id": "4875127"
+  },
+  {
+   "name": "Julian Sayin",
+   "pos": "QB",
+   "school": "Ohio State",
+   "dob": "2005-07-22",
+   "espn_id": "5079712"
+  },
+  {
+   "name": "Isaiah Sategna III",
+   "pos": "WR",
+   "school": "Oklahoma",
+   "dob": "2003-07-11",
+   "espn_id": "5080703"
+  },
+  {
+   "name": "Omarion Miller",
+   "pos": "WR",
+   "school": "Arizona State",
+   "dob": "2004-12-20",
+   "espn_id": "4870850"
+  },
+  {
+   "name": "Cameron Dickey",
+   "pos": "RB",
+   "school": "Texas Tech",
+   "dob": "2005-11-04",
+   "espn_id": "5193580"
+  },
+  {
+   "name": "Mario Craver",
+   "pos": "WR",
+   "school": "Texas A&M",
+   "dob": "2006-01-09",
+   "espn_id": "5079345"
+  },
+  {
+   "name": "Duce Robinson",
+   "pos": "WR",
+   "school": "Florida State",
+   "dob": "2005-01-19",
+   "espn_id": "4870922"
+  },
+  {
+   "name": "Raleek Brown",
+   "pos": "RB",
+   "school": "Texas",
+   "dob": "2003-08-02",
+   "espn_id": "4685268"
+  },
+  {
+   "name": "Deuce Alexander",
+   "pos": "WR",
+   "school": "Ole Miss",
+   "dob": "2005-07-27",
+   "espn_id": "5152158"
+  },
+  {
+   "name": "TJ Moore",
+   "pos": "WR",
+   "school": "Clemson",
+   "dob": "2006-04-14",
+   "espn_id": "5218753"
+  },
+  {
+   "name": "Wayne Knight",
+   "pos": "RB",
+   "school": "UCLA",
+   "dob": "",
+   "espn_id": "4912342"
+  },
+  {
+   "name": "DJ Vonnahme",
+   "pos": "TE",
+   "school": "Iowa",
+   "dob": "2006-02-02",
+   "espn_id": "5218931"
+  },
+  {
+   "name": "Amare Thomas",
+   "pos": "WR",
+   "school": "Houston",
+   "dob": "2005-11-18",
+   "espn_id": "5077060"
+  },
+  {
+   "name": "Nate Frazier",
+   "pos": "RB",
+   "school": "Georgia",
+   "dob": "2005-09-26",
+   "espn_id": "5084047"
+  },
+  {
+   "name": "Ryan Wingo",
+   "pos": "WR",
+   "school": "Texas",
+   "dob": "2006-02-15",
+   "espn_id": "5218633"
+  },
+  {
+   "name": "Cam Cook",
+   "pos": "RB",
+   "school": "West Virginia",
+   "dob": "",
+   "espn_id": "4918103"
+  },
+  {
+   "name": "Terrance Carter Jr.",
+   "pos": "TE",
+   "school": "Texas Tech",
+   "dob": "",
+   "espn_id": "4867887"
+  },
+  {
+   "name": "Eugene Wilson III",
+   "pos": "WR",
+   "school": "LSU",
+   "dob": "2004-12-16",
+   "espn_id": "4921154"
+  },
+  {
+   "name": "Brendan Sorsby",
+   "pos": "QB",
+   "school": "Texas Tech",
+   "dob": "2004-01-20",
+   "espn_id": null
+  },
+  {
+   "name": "Isaac Brown",
+   "pos": "RB",
+   "school": "Louisville",
+   "dob": "2005-03-02",
+   "espn_id": "5079349"
+  },
+  {
+   "name": "Nico Iamaleava",
+   "pos": "QB",
+   "school": "UCLA",
+   "dob": "2004-09-02",
+   "espn_id": "4870799"
+  },
+  {
+   "name": "Hollywood Smothers",
+   "pos": "RB",
+   "school": "Texas",
+   "dob": "2005-02-03",
+   "espn_id": "4871053"
+  },
+  {
+   "name": "Rocky Beers",
+   "pos": "TE",
+   "school": "Oklahoma",
+   "dob": "",
+   "espn_id": "4907786"
+  },
+  {
+   "name": "Wyatt Young",
+   "pos": "WR",
+   "school": "Oklahoma State",
+   "dob": "",
+   "espn_id": "5148787"
+  },
+  {
+   "name": "Nyck Harbor",
+   "pos": "WR",
+   "school": "South Carolina",
+   "dob": "2005-07-05",
+   "espn_id": "4870745"
+  },
+  {
+   "name": "Justice Haynes",
+   "pos": "RB",
+   "school": "Georgia Tech",
+   "dob": "2004-10-24",
+   "espn_id": "4870760"
+  },
+  {
+   "name": "Fluff Bothwell",
+   "pos": "RB",
+   "school": "Mississippi State",
+   "dob": "",
+   "espn_id": "5220197"
+  },
+  {
+   "name": "Luke Reynolds",
+   "pos": "TE",
+   "school": "Virginia Tech",
+   "dob": "",
+   "espn_id": "5138451"
+  },
+  {
+   "name": "Benjamin Brahmer",
+   "pos": "TE",
+   "school": "Penn State",
+   "dob": "",
+   "espn_id": "4870608"
+  },
+  {
+   "name": "Dorian Thomas",
+   "pos": "TE",
+   "school": "California",
+   "dob": "",
+   "espn_id": "4908552"
+  },
+  {
+   "name": "Luke Hasz",
+   "pos": "TE",
+   "school": "Ole Miss",
+   "dob": "2004-04-19",
+   "espn_id": "4870797"
+  },
+  {
+   "name": "Turbo Richard",
+   "pos": "RB",
+   "school": "Indiana",
+   "dob": "",
+   "espn_id": "5146724"
+  },
+  {
+   "name": "Luke Dehnicke",
+   "pos": "TE",
+   "school": "Northwestern",
+   "dob": "",
+   "espn_id": "5328488"
+  },
+  {
+   "name": "Conner Weigman",
+   "pos": "QB",
+   "school": "Houston",
+   "dob": "2003-08-08",
+   "espn_id": "4685574"
+  },
+  {
+   "name": "Jackson Harris",
+   "pos": "WR",
+   "school": "LSU",
+   "dob": "",
+   "espn_id": "5114311"
+  },
+  {
+   "name": "Emmett Mosley V",
+   "pos": "WR",
+   "school": "Texas",
+   "dob": "",
+   "espn_id": "5079613"
+  },
+  {
+   "name": "Junior Sherrill",
+   "pos": "WR",
+   "school": "Vanderbilt",
+   "dob": "",
+   "espn_id": "5078165"
+  }
+ ]
+}

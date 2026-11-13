@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-skin="rex">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0F1512">
+<meta name="color-scheme" content="dark">
+<link rel="icon" type="image/svg+xml" href="../icon.svg">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<title>DynoDraft</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+<style>
+/* DynoDraft: rookie-draft prep. Same look as DynoView; the league toggle swaps the skin (Shermonic = T-rex green, FN = triceratops red). */
+:root{
+  --bg:#0F1512; --surface:#18201C; --ink:#E7EDE9; --muted:#97A59C; --line:#2A3530;
+  --accent:#4FBF8A; --accent-2:#2E8F63; --accent-ink:#0F1512; --chip:#222C27; --horn:#F1E6CF;
+  --young:#5CD08F; --young-bg:#163626; --prime:#E9B154; --prime-bg:#3A2D14; --aging:#F07B6E; --aging-bg:#3F1E1A;
+  --qb:#C9A0F2; --rb:#5CD08F; --wr:#6FB7F2; --te:#E9B154;
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+:root[data-skin="trike"]{
+  --bg:#161112; --surface:#201819; --ink:#EFE8E8; --muted:#A79A9C; --line:#382C2D;
+  --accent:#E2837A; --accent-2:#B8615A; --accent-ink:#161112; --chip:#2B2122}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 var(--f-body)}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px 48px}
+button{font:inherit;color:inherit}
+header.bar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:14px 0 12px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand svg{width:44px;height:44px;flex:none}
+.brand h1{font:800 28px/1 var(--f-display);text-transform:uppercase;letter-spacing:.02em;margin:0}
+.brand h1 span{color:var(--accent)}
+.brand .lg{font-size:12.5px;color:var(--muted);margin-top:2px}
+.seg{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px}
+.seg button{border:0;background:none;padding:8px 14px;border-radius:999px;font:700 14px/1 var(--f-display);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:20px;margin-top:18px;align-items:start}
+@media (max-width:900px){.layout{grid-template-columns:1fr}.side{order:-1}}
+.tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.tools input{flex:1;min-width:160px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 12px;color:var(--ink);font:inherit}
+.chipbtn{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 11px;font:700 13px/1 var(--f-display);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);cursor:pointer}
+.chipbtn[aria-pressed="true"]{border-color:var(--accent);color:var(--ink)}
+.tier{background:var(--surface);border:1px solid var(--line);border-radius:12px;margin-bottom:10px;overflow:hidden}
+.tier-h{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line)}
+.tier-h h3{font:800 18px/1 var(--f-display);text-transform:uppercase;letter-spacing:.05em;margin:0}
+.tier-h h3 small{font:600 12px/1 var(--f-body);color:var(--muted);text-transform:none;letter-spacing:0;margin-left:8px}
+.tier-h .x{border:0;background:none;color:var(--muted);font-size:12px;cursor:pointer;padding:4px 6px;border-radius:6px}
+.tier-h .x:hover{color:var(--ink);background:var(--chip)}
+.list{min-height:44px;padding:4px 0}
+.row{display:grid;grid-template-columns:22px 34px 40px minmax(0,1fr) auto;align-items:center;gap:8px;padding:8px 12px;border-top:1px solid transparent;cursor:pointer;user-select:none}
+.row + .row{border-top-color:var(--line)}
+.row:hover{background:color-mix(in srgb,var(--chip) 60%,transparent)}
+.row.gone{opacity:.45}
+.grip{color:var(--muted);cursor:grab;font-size:15px;text-align:center;touch-action:none}
+.rk{font:700 13px/1 var(--f-mono);color:var(--muted);text-align:right}
+.pos{font:800 12px/1 var(--f-display);letter-spacing:.06em;padding:4px 0;border-radius:5px;text-align:center;color:#0F1512}
+.pos.QB{background:var(--qb)}.pos.RB{background:var(--rb)}.pos.WR{background:var(--wr)}.pos.TE{background:var(--te)}
+.who{min-width:0}
+.who b{font-weight:600}
+.who .s{color:var(--muted);font-size:13px;margin-left:6px}
+.meta{display:flex;gap:8px;align-items:center;font:500 13px/1 var(--f-mono);color:var(--muted)}
+:root{--gold:#E8C35A}
+.pk{font:800 12px/1 var(--f-display);letter-spacing:.05em;background:var(--gold);color:#1A1405;border-radius:5px;padding:4px 6px}
+.row.ring{box-shadow:inset 0 0 0 2px var(--gold);border-radius:8px;background:color-mix(in srgb,var(--gold) 8%,transparent)}
+.splitb{font:700 11px/1 var(--f-display);letter-spacing:.06em;text-transform:uppercase;border:1px dashed var(--line);background:none;color:var(--muted);border-radius:999px;padding:4px 8px;cursor:pointer;visibility:hidden}
+.row:hover .splitb,.splitb:focus-visible{visibility:visible}
+.splitb:hover{color:var(--ink);border-color:var(--accent)}
+@media (hover:none){.splitb{visibility:visible}}
+.empty{padding:12px;color:var(--muted);font-size:13px;text-align:center}
+.views{display:flex;gap:4px;margin-bottom:10px;border-bottom:1px solid var(--line)}
+.views button{border:0;background:none;padding:9px 14px 8px;font:700 16px/1 var(--f-display);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:3px solid transparent;cursor:pointer}
+.views button[aria-pressed="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.addtier{width:100%;border:1px dashed var(--line);background:none;border-radius:12px;padding:10px;color:var(--muted);font:700 14px/1 var(--f-display);text-transform:uppercase;letter-spacing:.06em;cursor:pointer}
+.addtier:hover{color:var(--ink);border-color:var(--accent)}
+.g-good{color:var(--young)}.g-avg{color:var(--prime)}.g-poor{color:var(--aging)}
+.pill{font:700 12px/1 var(--f-display);letter-spacing:.05em;text-transform:uppercase;border-radius:4px;padding:3px 5px;margin-left:6px}
+.pill.g-good{background:var(--young-bg)}.pill.g-avg{background:var(--prime-bg)}.pill.g-poor{background:var(--aging-bg)}
+.legend{font-size:12px;color:var(--muted);margin:6px 0 0}
+.detail{grid-column:1/-1;padding:4px 0 6px 64px;cursor:default}
+.facts{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13.5px;margin-bottom:8px}
+.facts span{color:var(--muted)}.facts b{font-weight:600;color:var(--ink)}
+table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+th{font:700 11.5px/1 var(--f-display);text-transform:uppercase;letter-spacing:.07em;color:var(--muted);text-align:right;padding:5px 6px;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){text-align:left}
+td{padding:5px 6px;text-align:right;border-bottom:1px solid var(--line)}
+.ghost{opacity:.35}
+.side .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;margin-bottom:12px;overflow:hidden}
+.side .card-h{padding:11px 14px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:baseline}
+.side h3{font:800 18px/1 var(--f-display);text-transform:uppercase;letter-spacing:.05em;margin:0}
+.side small{font-size:12px;color:var(--muted)}
+.mypk{display:grid;grid-template-columns:56px 1fr;gap:2px 10px;padding:10px 14px;border-top:1px solid var(--line);align-items:center}
+.mypk:first-of-type{border-top:0}
+.mypk .n{font:800 26px/1 var(--f-display);color:var(--gold)}
+.mypk .t{font-size:13px;color:var(--muted)}
+.mypk .tg{font-size:13.5px}
+.note{padding:10px 14px;font-size:12.5px;color:var(--muted)}
+.btns{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px}
+.btns button{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:7px 10px;font-size:13px;cursor:pointer}
+.btns button:hover{border-color:var(--accent)}
+.txt{padding:0 14px 12px}
+.txt textarea{width:100%;height:150px;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px;font:12px/1.4 var(--f-mono);resize:vertical}
+.txt p{margin:6px 0;font-size:12.5px;color:var(--muted)}
+.txt button{border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);border-radius:8px;padding:7px 12px;font:700 13px/1 var(--f-display);letter-spacing:.05em;text-transform:uppercase;cursor:pointer}
+.foot{margin-top:18px;font-size:12px;color:var(--muted)}
+.foot a{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="bar">
+    <div class="brand"><svg viewBox="0 0 64 64" aria-hidden="true" id="logo"></svg><div><h1>Dyno<span>Draft</span></h1><div class="lg" id="lg">Rookie draft prep</div></div></div>
+    <div class="seg" role="group" aria-label="League">
+      <button type="button" data-lg="sh" aria-pressed="true">Shermonic · 1QB</button>
+      <button type="button" data-lg="fn" aria-pressed="false">FN · Superflex</button>
+    </div>
+  </header>
+  <div class="layout">
+    <main>
+      <div class="views" role="group" aria-label="Board" id="views"></div>
+      <div class="tools">
+        <input id="q" type="search" placeholder="Find a player or school" aria-label="Find a player">
+        <button type="button" class="chipbtn" id="undo" title="Undo your last change on this board">Undo</button>
+        <button type="button" class="chipbtn" id="dim" aria-pressed="false" title="Fade players you rank ahead of your first pick">Fade gone before my pick</button>
+      </div>
+      <div id="board"></div>
+    </main>
+    <aside class="side" id="side"></aside>
+  </div>
+  <div class="foot" id="foot"></div>
+</div>
+
+<script type="application/json" id="dd-data">/*DRAFT*/null</script>
+<script type="application/json" id="dd-sh">/*SH*/null</script>
+<script type="application/json" id="dd-fn">/*FN*/null</script>
+<script>
+function rex(){ return `<g>
+    <path d="M4 40c6 3 12 3 17 0l4 8c-7 4-15 2-21-8z" fill="var(--accent)"/>
+    <ellipse cx="28" cy="43" rx="12" ry="10" fill="var(--accent)"/>
+    <rect x="20" y="48" width="6" height="11" rx="3" fill="var(--accent)"/>
+    <rect x="30" y="48" width="6" height="11" rx="3" fill="var(--accent)"/>
+    <path d="M30 40c-2-6-2-12 0-16l10 0 0 14z" fill="var(--accent)"/>
+    <rect x="29" y="12" width="31" height="22" rx="10" fill="var(--accent)"/>
+    <path d="M45 29c4 1.5 9 1.5 13-.5" stroke="var(--ink)" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    <path d="M38 41l5 1.5" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="50" cy="20.5" r="2.4" fill="var(--surface)"/><circle cx="50.7" cy="20.6" r="1.2" fill="var(--ink)"/>
+    <path d="M26 30c-2-10 3-20 14-21 6-.5 10 1.5 12 5-3 0-6 2-7 6l-1 6c-1 3-4 5-7 6z" fill="var(--ink)"/>
+    <path d="M31 13c3-2 8-3 12-2" stroke="var(--accent)" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+    <circle cx="35" cy="22" r="2.3" fill="var(--surface)"/>
+    <path d="M45 23.5h15.5M44.5 28.5h16M52 23.5v5M60.5 23.5v5" stroke="var(--muted)" stroke-width="1.7" stroke-linecap="round" fill="none"/>
+  </g>`; }
+function trike(){ return `<g>
+  <path d="M3 41c5 2 9 1 12-2l3 7c-6 3-11 1-15-5z" fill="var(--accent)"/>
+  <ellipse cx="26" cy="42" rx="16" ry="11" fill="var(--accent)"/>
+  <rect x="13" y="47" width="6" height="11" rx="3" fill="var(--accent)"/>
+  <rect x="21" y="49" width="6" height="10" rx="3" fill="var(--accent-2)"/>
+  <rect x="30" y="49" width="6" height="10" rx="3" fill="var(--accent-2)"/>
+  <rect x="35" y="47" width="6" height="11" rx="3" fill="var(--accent)"/>
+  <path d="M30 32c0-12 9-20 18-19 1 0 1.5 1 1 2-2 3-1.5 7 1 9l-6 13c-6 2-11 0-14-5z" fill="var(--accent-2)"/>
+  <path d="M31.5 30c1-6 4-10 8-12M33 35c0-3 1-5 3-7" stroke="var(--accent)" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".7"/>
+  <rect x="38" y="24" width="22" height="16" rx="8" fill="var(--accent)"/>
+  <path d="M58 30l5.5 2.5-5.5 3z" fill="var(--accent)"/>
+  <path d="M59 26.5l1.5-5 2 5.5z" fill="var(--horn)"/>
+  <path d="M38 27c-.5-7 4-12 10-12.5 4.5-.3 8 1.5 9.5 5l-1 4.5H44l-4 6.5z" fill="var(--ink)"/>
+  <path d="M46 16.5l3.5-9 1.5 9.5zM53 18l5-7.5-.5 9z" fill="var(--horn)"/>
+  <path d="M43 17.5c2.5-1.5 6-2 9-1.3" stroke="var(--accent)" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+  <circle cx="51" cy="28.5" r="2.4" fill="var(--surface)"/><circle cx="51.7" cy="28.6" r="1.2" fill="var(--ink)"/>
+  <circle cx="42" cy="23" r="2.1" fill="var(--surface)"/>
+  <path d="M47 35.5c3.5 1.3 8 1.2 11.5-.6" stroke="var(--ink)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <path d="M45 30.5h17.5M45 34h17M53 30.5v3.5M61.5 30.5v3.5" stroke="var(--muted)" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+</g>`; }
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const load = id => { try { return JSON.parse($(id).textContent); } catch (e) { return null; } };
+const store = { get(k){ try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }, set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
+let DD = load("dd-data"), LG = { sh: load("dd-sh"), fn: load("dd-fn") };
+const LEAGUES = { sh: { fmt: "1qb", skin: "rex", file: "../data.json", name: "Shermonic" }, fn: { fmt: "sf", skin: "trike", file: "../fn/data.json", name: "FN" } };
+const VIEWS = ["ALL", "QB", "RB", "WR", "TE"];
+const st = { lg: store.get("dd_league") || "sh", view: "ALL", q: "", open: new Set(), dim: false };
+const TIER_SIZES = { ALL: [1, 3, 4, 5, 5, 6, 6, 8, 8, 10], POS: [1, 2, 3, 3, 4, 4, 5, 6] };
+const BRK = "|";
+const undo = {};   // per board: earlier versions, newest last (this visit only)
+
+/* ---------- grading: what counts as good, average or poor ---------- */
+// Dominator = share of team receiving yards + TDs (scrimmage for RBs). Breakout = first season at 20%+.
+const GRADE = {
+  dom: { WR: [30, 20], TE: [20, 12], RB: [30, 20] },          // good at or above the first, average at or above the second
+  brk: { WR: [19.5, 20.5], TE: [20, 21.5], RB: [19.5, 20.5] } // good at or under the first, average at or under the second
+};
+const gDom = (pos, v) => { const g = GRADE.dom[pos]; if (!g || v == null) return ""; return v >= g[0] ? "good" : v >= g[1] ? "avg" : "poor"; };
+const gBrk = (pos, v) => { const g = GRADE.brk[pos]; if (!g || v == null) return ""; return v <= g[0] ? "good" : v <= g[1] ? "avg" : "poor"; };
+const WORD = { good: "good", avg: "average", poor: "poor" };
+
+/* ---------- board state: ordered names with tier breaks, one per league and tab ---------- */
+const key = (view = st.view) => `dd_board_${DD.class}_${st.lg}_${view}`;
+const poolFor = view => { const PL = P(); return DD.default_order[LEAGUES[st.lg].fmt].filter(n => view === "ALL" || PL[n]?.pos === view); };
+function defaultOrder(view = st.view){
+  const names = poolFor(view), sizes = view === "ALL" ? TIER_SIZES.ALL : TIER_SIZES.POS, out = []; let i = 0, t = 0;
+  while (i < names.length) { const n = sizes[Math.min(t, sizes.length - 1)]; out.push(...names.slice(i, i + n)); i += n; t++; if (i < names.length) out.push(BRK); }
+  return out;
+}
+function board(view = st.view){
+  let b = store.get(key(view));
+  if (!Array.isArray(b)) b = defaultOrder(view);
+  const pool = poolFor(view), have = new Set(pool);
+  b = b.filter(n => n === BRK || have.has(n));                         // drop players no longer in the class
+  const seen = new Set(b); const added = pool.filter(n => !seen.has(n));
+  if (added.length) b.push(...added);                                  // new prospects land at the bottom
+  while (b[0] === BRK) b.shift();
+  return b;
+}
+function save(b){ const k = key(); const prev = board(); (undo[k] ||= []).push(prev); if (undo[k].length > 30) undo[k].shift(); store.set(k, b); }
+const tiersOf = b => { const t = [[]]; for (const n of b) n === BRK ? t.push([]) : t.at(-1).push(n); return t; };
+const flat = tiers => tiers.flatMap((t, i) => i ? [BRK, ...t] : t);
+
+/* ---------- my picks, from DynoView's league data ---------- */
+function myPicks(){
+  const L = LG[st.lg]; if (!L) return [];
+  const me = L.teams.find(t => t.name === "Jake"); if (!me) return [];
+  const T = Object.fromEntries(L.teams.map(t => [t.rid, t])), N = L.teams.length;
+  return me.picks.filter(p => p.yr === DD.class).map(p => {
+    const slot = T[p.from]?.proj_slot || null;
+    return { rd: p.rd, slot, overall: slot ? (p.rd - 1) * N + slot : null, from: p.from === me.rid ? null : T[p.from]?.name, label: slot ? `${p.rd}.${String(slot).padStart(2, "0")}` : `Rd ${p.rd}` };
+  }).sort((a, b) => (a.overall ?? 999) - (b.overall ?? 999));
+}
+
+/* ---------- rendering ---------- */
+let _P = null;
+const P = () => _P ||= Object.fromEntries(DD.players.map(p => [p.name, p]));
+const fmtAge = a => a == null ? "–" : a.toFixed(1);
+const n_ = v => +String(v ?? "").replace(/,/g, "") || 0;
+const domCell = (pos, v) => v == null ? "–" : `<span class="g-${gDom(pos, v)}">${v}%</span>`;
+function detail(p){
+  const dg = gDom(p.pos, p.best_dom), bg = gBrk(p.pos, p.breakout_age);
+  const facts = [
+    ["Ht / Wt", p.ht ? `${esc(p.ht)}, ${esc(p.wt)} lb` : "–"],
+    ["Age at NFL draft", fmtAge(p.age)],
+    ["Best dominator", p.pos === "QB" ? "n/a for QBs" : p.best_dom != null ? `${p.best_dom}% (${p.best_dom_year})${dg ? `<span class="pill g-${dg}">${WORD[dg]}</span>` : ""}` : "–"],
+    ["Breakout", p.pos === "QB" ? "n/a for QBs" : p.breakout_year ? `${p.breakout_year}${p.breakout_age != null ? `, age ${p.breakout_age}` : ", age unknown"}${bg ? `<span class="pill g-${bg}">${WORD[bg]}</span>` : ""}` : `not yet<span class="pill g-poor">no 20% season</span>`],
+  ];
+  const ss = p.seasons || [], cur = Math.max(...ss.map(s => s.year), 0);
+  const yr = s => `${s.year}${s.year === cur && s.year >= DD.class - 1 ? " (so far)" : ""}`;
+  let tbl = "";
+  if (!ss.length) tbl = `<div class="facts"><span>No ESPN stats on file right now.</span></div>`;
+  else if (p.pos === "QB") tbl = `<table><thead><tr><th>Season</th><th>Team</th><th>GP</th><th>Cmp %</th><th>Pass yds</th><th>TD</th><th>INT</th><th>Rush yds</th><th>Rush TD</th></tr></thead><tbody>${ss.map(s => { const a = n_(s.pass?.ATT); return `<tr><td>${yr(s)}</td><td>${esc(s.team)}</td><td>${s.gp ?? "–"}</td><td>${a ? (100 * n_(s.pass.CMP) / a).toFixed(1) + "%" : "–"}</td><td>${s.pass?.YDS ?? "–"}</td><td>${s.pass?.TD ?? "–"}</td><td>${s.pass?.INT ?? "–"}</td><td>${s.rush?.YDS ?? "–"}</td><td>${s.rush?.TD ?? "–"}</td></tr>`; }).join("")}</tbody></table>`;
+  else if (p.pos === "RB") tbl = `<table><thead><tr><th>Season</th><th>Team</th><th>GP</th><th>Car</th><th>Rush yds</th><th>Rush TD</th><th>Rec</th><th>Rec yds</th><th>Rec TD</th><th>Dom</th></tr></thead><tbody>${ss.map(s => `<tr><td>${yr(s)}</td><td>${esc(s.team)}</td><td>${s.gp ?? "–"}</td><td>${s.rush?.CAR ?? "–"}</td><td>${s.rush?.YDS ?? "–"}</td><td>${s.rush?.TD ?? "–"}</td><td>${s.rec?.REC ?? "–"}</td><td>${s.rec?.YDS ?? "–"}</td><td>${s.rec?.TD ?? "–"}</td><td>${domCell(p.pos, s.dom)}</td></tr>`).join("")}</tbody></table>`;
+  else tbl = `<table><thead><tr><th>Season</th><th>Team</th><th>GP</th><th>Rec</th><th>Yds</th><th>TD</th><th>Yds/rec</th><th>Dom</th></tr></thead><tbody>${ss.map(s => { const r = s.rec || {}; return `<tr><td>${yr(s)}</td><td>${esc(s.team)}</td><td>${s.gp ?? "–"}</td><td>${r.REC ?? "–"}</td><td>${r.YDS ?? "–"}</td><td>${r.TD ?? "–"}</td><td>${n_(r.REC) ? (n_(r.YDS) / n_(r.REC)).toFixed(1) : "–"}</td><td>${domCell(p.pos, s.dom)}</td></tr>`; }).join("")}</tbody></table>`;
+  const g = GRADE.dom[p.pos], b = GRADE.brk[p.pos];
+  const legend = p.pos === "QB" ? "" : `<p class="legend">${p.pos} dominator: <span class="g-good">${g[0]}%+ good</span> · <span class="g-avg">${g[1]}–${g[0]}% average</span> · <span class="g-poor">under ${g[1]}% poor</span>. Breakout age: <span class="g-good">${b[0]} or younger good</span> · <span class="g-avg">up to ${b[1]} average</span> · <span class="g-poor">older or none poor</span>.</p>`;
+  return `<div class="detail"><div class="facts">${facts.map(([k, v]) => `<div><span>${k}</span> <b>${v}</b></div>`).join("")}</div>${tbl}${legend}</div>`;
+}
+function render(){
+  document.documentElement.dataset.skin = LEAGUES[st.lg].skin;
+  $("logo").innerHTML = st.lg === "fn" ? trike() : rex();
+  document.querySelectorAll(".seg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.lg === st.lg)));
+  $("lg").textContent = `${DD.class} rookie class · ${LEAGUES[st.lg].name} (${st.lg === "fn" ? "Superflex" : "1QB"})`;
+  $("views").innerHTML = VIEWS.map(v => `<button type="button" data-view="${v}" aria-pressed="${st.view === v}">${v === "ALL" ? "All" : v}</button>`).join("");
+  $("dim").hidden = st.view !== "ALL";
+  $("undo").disabled = !(undo[key()] || []).length;
+  const PL = P(), tiers = tiersOf(board()), picks = myPicks();
+  // gold ring: on the All board, the player at each of my pick numbers
+  const ringAt = {}; if (st.view === "ALL") for (const pk of picks) if (pk.overall) (ringAt[pk.overall] ||= []).push(pk.label);
+  const firstPick = picks.find(p => p.overall)?.overall;
+  const q = st.q.toLowerCase();
+  let rank = 0;
+  $("board").innerHTML = tiers.map((t, ti) => `<section class="tier"><div class="tier-h"><h3>Tier ${ti + 1}<small>${t.length} player${t.length === 1 ? "" : "s"}</small></h3>${!t.length ? `<button type="button" class="x" data-remove="${ti}" title="Remove this empty tier">Remove</button>` : ti ? `<button type="button" class="x" data-merge="${ti}" title="Move these players into the tier above (nobody is removed)">Merge up</button>` : ""}</div>
+    <div class="list" data-tier="${ti}">${t.length ? "" : `<div class="empty">Empty tier: drag players here</div>`}${t.map((n, i) => { rank++; const p = PL[n]; const hide = q && !(n.toLowerCase().includes(q) || (p.school || "").toLowerCase().includes(q));
+      const gone = st.dim && st.view === "ALL" && firstPick && rank < firstPick; const ring = ringAt[rank];
+      return `<div class="row${ring ? " ring" : ""}${gone ? " gone" : ""}" data-name="${esc(n)}"${hide ? " hidden" : ""}><span class="grip" aria-hidden="true">⋮⋮</span><span class="rk">${rank}</span><span class="pos ${p.pos}">${p.pos}</span><span class="who"><b>${esc(n)}</b><span class="s">${esc(p.school)}</span></span><span class="meta">${i < t.length - 1 ? `<button type="button" class="splitb" data-split="${esc(n)}" title="Start a new tier after ${esc(n)}">New tier below</button>` : ""}${(ring || []).map(l => `<span class="pk" title="Your ${l} lands on this spot of your board">${l}</span>`).join("")}<span>${fmtAge(p.age)}</span></span>${st.open.has(n) ? detail(p) : ""}</div>`; }).join("")}</div></section>`).join("") + `<button type="button" class="addtier" id="addtier">+ Add an empty tier at the bottom</button>`;
+  document.querySelectorAll(".list").forEach(el => new Sortable(el, { group: "board", animation: 120, handle: ".grip", ghostClass: "ghost", filter: ".empty", onEnd: commit }));
+  renderSide(picks);
+  $("foot").innerHTML = `Stats from ESPN, updated ${new Date(DD.generated).toLocaleString([], {month: "short", day: "numeric", hour: "numeric", minute: "2-digit"})}. Dominator = share of team receiving yards and TDs (scrimmage yards and TDs for RBs); breakout = first season at 20% or more. Ages are on NFL draft day (${DD.draft_day}). Each tab keeps its own board, saved in this browser; Export backs up all of them.`;
+}
+function commit(){
+  const tiers = [...document.querySelectorAll(".list")].map(l => [...l.querySelectorAll(".row")].map(r => r.dataset.name));
+  save(flat(tiers)); render();
+}
+function renderSide(picks){
+  const L = LG[st.lg];
+  const basis = L ? (L.draft_race.rest_basis === "playoff finish" ? "final standings and playoffs" : "current standings, with playoff teams ordered by win-now strength") : "";
+  $("side").innerHTML = `<section class="card"><div class="card-h"><h3>Your ${DD.class} picks</h3><small>${picks.length} pick${picks.length === 1 ? "" : "s"}</small></div>
+    ${picks.length ? picks.map(pk => `<div class="mypk"><div class="n">${pk.label}</div><div class="t">Round ${pk.rd}${pk.overall ? `, pick ${pk.overall} overall` : ""}${pk.from ? ` · via ${esc(pk.from)}` : ""}</div></div>`).join("") : `<div class="note">No ${DD.class} picks right now.</div>`}
+    <div class="note">Projected from ${basis}. On the All tab, a gold ring marks the player sitting at each of your pick numbers on your board.</div></section>
+    <section class="card"><div class="card-h"><h3>Board</h3><small>each tab saves separately</small></div>
+    <div class="note">Drag a player by the ⋮⋮ handle. Hover a player and click <b>New tier below</b> to split a tier there, or add an empty tier at the bottom and drag players into it. <b>Merge up</b> moves a tier's players into the tier above; nobody is ever removed, and Undo reverses any change.</div>
+    <div class="btns"><button type="button" id="copytxt">Copy as text</button><button type="button" id="pastetxt">Paste text</button><button type="button" id="exp">Export file</button><button type="button" id="imp">Import file</button><button type="button" id="reset">Reset this tab</button></div></section>`;
+}
+
+/* ---------- events ---------- */
+document.addEventListener("click", e => {
+  const lgB = e.target.closest(".seg button"); if (lgB) { st.lg = lgB.dataset.lg; store.set("dd_league", st.lg); render(); return; }
+  const vB = e.target.closest("[data-view]"); if (vB) { st.view = vB.dataset.view; render(); return; }
+  const sp = e.target.closest("[data-split]"); if (sp) { const b = board(); b.splice(b.indexOf(sp.dataset.split) + 1, 0, BRK); save(b); render(); return; }
+  const mg = e.target.closest("[data-merge]"); if (mg) { const t = tiersOf(board()), i = +mg.dataset.merge; t[i - 1].push(...t[i]); t.splice(i, 1); save(flat(t)); render(); return; }
+  const rm = e.target.closest("[data-remove]"); if (rm) { const t = tiersOf(board()); t.splice(+rm.dataset.remove, 1); save(flat(t)); render(); return; }
+  if (e.target.id === "addtier") { const b = board(); b.push(BRK); save(b); render(); return; }
+  if (e.target.id === "undo") { const u = undo[key()]; if (u?.length) { store.set(key(), u.pop()); render(); } return; }
+  if (e.target.id === "dim") { st.dim = !st.dim; e.target.setAttribute("aria-pressed", String(st.dim)); render(); return; }
+  if (e.target.id === "reset") { save(defaultOrder()); render(); return; }
+  if (e.target.id === "copytxt") {
+    const text = JSON.stringify({ class: DD.class, boards: allBoards() });
+    showText(`<p>Your boards for both leagues and every tab. Copy this, then use <b>Paste text</b> on the other page (or send it to Claude).</p><textarea id="txtbox" readonly>${esc(text)}</textarea>`);
+    const box = $("txtbox"); box.focus(); box.select();
+    try { navigator.clipboard.writeText(text).then(() => { const n = document.querySelector(".txt p"); if (n) n.innerHTML = "<b>Copied.</b> Use <b>Paste text</b> on the other page to load these boards."; }, () => {}); } catch (err) {}
+    return;
+  }
+  if (e.target.id === "pastetxt") { showText(`<p>Paste text copied from DynoDraft, then Load. Only the boards in the text are replaced; Undo can't reverse this.</p><textarea id="txtbox" placeholder='{"class":2027,"boards":{...}}'></textarea><p><button type="button" id="loadtxt">Load</button> <span id="txtmsg"></span></p>`); $("txtbox").focus(); return; }
+  if (e.target.id === "loadtxt") {
+    try { const j = JSON.parse($("txtbox").value); const n = loadBoards(j); if (n) { render(); showText(`<p id="txtmsg"><b>Loaded ${n} board${n === 1 ? "" : "s"}.</b> Check the tabs; anything else stays as it was.</p>`); } else $("txtmsg").textContent = "No boards found in that text."; }
+    catch (err) { $("txtmsg").textContent = "That text isn't a DynoDraft board. Copy it again and paste the whole thing."; }
+    return;
+  }
+  if (e.target.id === "exp") {
+    const blob = new Blob([JSON.stringify({ class: DD.class, boards: allBoards() }, null, 1)], { type: "application/json" });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `dynodraft-${DD.class}.json`; a.click(); return;
+  }
+  if (e.target.id === "imp") { const f = document.createElement("input"); f.type = "file"; f.accept = ".json,application/json"; f.onchange = () => f.files[0]?.text().then(t => { try { if (loadBoards(JSON.parse(t))) render(); } catch (err) {} }); f.click(); return; }
+  const row = e.target.closest(".row"); if (row && !e.target.closest(".grip") && !e.target.closest(".detail") && !e.target.closest("button")) { const n = row.dataset.name; st.open.has(n) ? st.open.delete(n) : st.open.add(n); render(); }
+});
+$("q").addEventListener("input", e => { st.q = e.target.value.trim(); render(); });
+function allBoards(){ const boards = {}; for (const lg of Object.keys(LEAGUES)) for (const v of VIEWS) { const b = store.get(`dd_board_${DD.class}_${lg}_${v}`); if (b) boards[`${lg}_${v}`] = b; } return boards; }
+function loadBoards(j){ let n = 0; for (const [k, b] of Object.entries(j.boards || {})) if (Array.isArray(b)) { store.set(`dd_board_${j.class || DD.class}_${k}`, b); n++; } return n; }
+function showText(html){ let el = $("txt"); if (!el) { el = document.createElement("div"); el.id = "txt"; el.className = "txt"; document.querySelector(".side .btns").after(el); } el.innerHTML = html; }
+async function boot(){
+  try { if (!DD) DD = await (await fetch("data.json", { cache: "no-store" })).json(); } catch (e) {}
+  for (const k of ["sh", "fn"]) { try { if (!LG[k]) LG[k] = await (await fetch(LEAGUES[k].file, { cache: "no-store" })).json(); } catch (e) {} }
+  if (!DD) { $("board").innerHTML = `<p>Couldn't load the prospect list. Refresh the page.</p>`; return; }
+  render();
+}
+boot();
+</script>
+</body>
+</html>
+
+</body></html>
