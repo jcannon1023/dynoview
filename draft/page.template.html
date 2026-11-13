@@ -103,6 +103,10 @@ td{padding:5px 6px;text-align:right;border-bottom:1px solid var(--line)}
 .btns{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px}
 .btns button{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:7px 10px;font-size:13px;cursor:pointer}
 .btns button:hover{border-color:var(--accent)}
+.txt{padding:0 14px 12px}
+.txt textarea{width:100%;height:150px;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px;font:12px/1.4 var(--f-mono);resize:vertical}
+.txt p{margin:6px 0;font-size:12.5px;color:var(--muted)}
+.txt button{border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);border-radius:8px;padding:7px 12px;font:700 13px/1 var(--f-display);letter-spacing:.05em;text-transform:uppercase;cursor:pointer}
 .foot{margin-top:18px;font-size:12px;color:var(--muted)}
 .foot a{color:var(--accent)}
 </style>
@@ -251,7 +255,7 @@ function renderSide(picks){
     <div class="note">Projected from ${basis}. On the All tab, a gold ring marks the player sitting at each of your pick numbers on your board.</div></section>
     <section class="card"><div class="card-h"><h3>Board</h3><small>each tab saves separately</small></div>
     <div class="note">Drag a player by the ⋮⋮ handle. Hover a player and click <b>New tier below</b> to split a tier there, or add an empty tier at the bottom and drag players into it. <b>Merge up</b> moves a tier's players into the tier above; nobody is ever removed, and Undo reverses any change.</div>
-    <div class="btns"><button type="button" id="exp">Export</button><button type="button" id="imp">Import</button><button type="button" id="reset">Reset this tab</button></div></section>`;
+    <div class="btns"><button type="button" id="copytxt">Copy as text</button><button type="button" id="pastetxt">Paste text</button><button type="button" id="exp">Export file</button><button type="button" id="imp">Import file</button><button type="button" id="reset">Reset this tab</button></div></section>`;
 }
 
 /* ---------- events ---------- */
@@ -265,15 +269,30 @@ document.addEventListener("click", e => {
   if (e.target.id === "undo") { const u = undo[key()]; if (u?.length) { store.set(key(), u.pop()); render(); } return; }
   if (e.target.id === "dim") { st.dim = !st.dim; e.target.setAttribute("aria-pressed", String(st.dim)); render(); return; }
   if (e.target.id === "reset") { save(defaultOrder()); render(); return; }
+  if (e.target.id === "copytxt") {
+    const text = JSON.stringify({ class: DD.class, boards: allBoards() });
+    showText(`<p>Your boards for both leagues and every tab. Copy this, then use <b>Paste text</b> on the other page (or send it to Claude).</p><textarea id="txtbox" readonly>${esc(text)}</textarea>`);
+    const box = $("txtbox"); box.focus(); box.select();
+    try { navigator.clipboard.writeText(text).then(() => { const n = document.querySelector(".txt p"); if (n) n.innerHTML = "<b>Copied.</b> Use <b>Paste text</b> on the other page to load these boards."; }, () => {}); } catch (err) {}
+    return;
+  }
+  if (e.target.id === "pastetxt") { showText(`<p>Paste text copied from DynoDraft, then Load. Only the boards in the text are replaced; Undo can't reverse this.</p><textarea id="txtbox" placeholder='{"class":2027,"boards":{...}}'></textarea><p><button type="button" id="loadtxt">Load</button> <span id="txtmsg"></span></p>`); $("txtbox").focus(); return; }
+  if (e.target.id === "loadtxt") {
+    try { const j = JSON.parse($("txtbox").value); const n = loadBoards(j); if (n) { render(); showText(`<p id="txtmsg"><b>Loaded ${n} board${n === 1 ? "" : "s"}.</b> Check the tabs; anything else stays as it was.</p>`); } else $("txtmsg").textContent = "No boards found in that text."; }
+    catch (err) { $("txtmsg").textContent = "That text isn't a DynoDraft board. Copy it again and paste the whole thing."; }
+    return;
+  }
   if (e.target.id === "exp") {
-    const boards = {}; for (const lg of Object.keys(LEAGUES)) for (const v of VIEWS) { const b = store.get(`dd_board_${DD.class}_${lg}_${v}`); if (b) boards[`${lg}_${v}`] = b; }
-    const blob = new Blob([JSON.stringify({ class: DD.class, boards }, null, 1)], { type: "application/json" });
+    const blob = new Blob([JSON.stringify({ class: DD.class, boards: allBoards() }, null, 1)], { type: "application/json" });
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `dynodraft-${DD.class}.json`; a.click(); return;
   }
-  if (e.target.id === "imp") { const f = document.createElement("input"); f.type = "file"; f.accept = ".json,application/json"; f.onchange = () => f.files[0]?.text().then(t => { try { const j = JSON.parse(t); for (const [k, b] of Object.entries(j.boards || {})) if (Array.isArray(b)) store.set(`dd_board_${j.class || DD.class}_${k}`, b); render(); } catch (err) {} }); f.click(); return; }
+  if (e.target.id === "imp") { const f = document.createElement("input"); f.type = "file"; f.accept = ".json,application/json"; f.onchange = () => f.files[0]?.text().then(t => { try { if (loadBoards(JSON.parse(t))) render(); } catch (err) {} }); f.click(); return; }
   const row = e.target.closest(".row"); if (row && !e.target.closest(".grip") && !e.target.closest(".detail") && !e.target.closest("button")) { const n = row.dataset.name; st.open.has(n) ? st.open.delete(n) : st.open.add(n); render(); }
 });
 $("q").addEventListener("input", e => { st.q = e.target.value.trim(); render(); });
+function allBoards(){ const boards = {}; for (const lg of Object.keys(LEAGUES)) for (const v of VIEWS) { const b = store.get(`dd_board_${DD.class}_${lg}_${v}`); if (b) boards[`${lg}_${v}`] = b; } return boards; }
+function loadBoards(j){ let n = 0; for (const [k, b] of Object.entries(j.boards || {})) if (Array.isArray(b)) { store.set(`dd_board_${j.class || DD.class}_${k}`, b); n++; } return n; }
+function showText(html){ let el = $("txt"); if (!el) { el = document.createElement("div"); el.id = "txt"; el.className = "txt"; document.querySelector(".side .btns").after(el); } el.innerHTML = html; }
 async function boot(){
   try { if (!DD) DD = await (await fetch("data.json", { cache: "no-store" })).json(); } catch (e) {}
   for (const k of ["sh", "fn"]) { try { if (!LG[k]) LG[k] = await (await fetch(LEAGUES[k].file, { cache: "no-store" })).json(); } catch (e) {} }
