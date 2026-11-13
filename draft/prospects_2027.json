@@ -52,6 +52,9 @@
    "Hollywood Smothers",
    "Rocky Beers",
    "Wyatt Young",
+   "Jackson Harris",
+   "Emmett Mosley V",
+   "Junior Sherrill",
    "Nyck Harbor",
    "Justice Haynes",
    "Fluff Bothwell",
@@ -109,6 +112,9 @@
    "Julian Sayin",
    "Rocky Beers",
    "Wyatt Young",
+   "Jackson Harris",
+   "Emmett Mosley V",
+   "Junior Sherrill",
    "Nyck Harbor",
    "Justice Haynes",
    "Fluff Bothwell",
@@ -521,6 +527,27 @@
    "school": "Houston",
    "dob": "2003-08-08",
    "espn_id": "4685574"
+  },
+  {
+   "name": "Jackson Harris",
+   "pos": "WR",
+   "school": "LSU",
+   "dob": "",
+   "espn_id": "5114311"
+  },
+  {
+   "name": "Emmett Mosley V",
+   "pos": "WR",
+   "school": "Texas",
+   "dob": "",
+   "espn_id": "5079613"
+  },
+  {
+   "name": "Junior Sherrill",
+   "pos": "WR",
+   "school": "Vanderbilt",
+   "dob": "",
+   "espn_id": "5078165"
   }
  ]
 }
