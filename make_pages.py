@@ -17,3 +17,12 @@ for a, b in [('<html lang="en" data-theme="dark">', '<html lang="en" data-theme=
 os.makedirs(os.path.join(HERE, "fn"), exist_ok=True)
 open(os.path.join(HERE, "fn", "index.html"), "w").write(src)
 print("wrote fn/index.html")
+
+# DynoDraft page: the template plus the two mascots from the main page (one source of truth for the drawings)
+def mascot(fn):
+    return src0.split(f"function {fn}(){{\n  return `")[1].split("`;")[0]
+src0 = open(os.path.join(HERE, "index.html")).read()
+tpl = open(os.path.join(HERE, "draft", "page.template.html")).read()
+tpl = tpl.replace("/*REX*/", mascot("rex")).replace("/*TRIKE*/", mascot("trike"))
+open(os.path.join(HERE, "draft", "index.html"), "w").write(tpl)
+print("wrote draft/index.html")
