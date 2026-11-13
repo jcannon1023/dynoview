@@ -47,7 +47,7 @@ header.bar{display:flex;align-items:center;justify-content:space-between;gap:16p
 .chipbtn{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 11px;font:700 13px/1 var(--f-display);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);cursor:pointer}
 .chipbtn[aria-pressed="true"]{border-color:var(--accent);color:var(--ink)}
 .tier{background:var(--surface);border:1px solid var(--line);border-radius:12px;margin-bottom:10px;overflow:hidden}
-.tier-h{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line)}
+.tier-h{user-select:none;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line)}
 .tier-h h3{font:800 18px/1 var(--f-display);text-transform:uppercase;letter-spacing:.05em;margin:0}
 .tier-h h3 small{font:600 12px/1 var(--f-body);color:var(--muted);text-transform:none;letter-spacing:0;margin-left:8px}
 .tier-h .x{border:0;background:none;color:var(--muted);font-size:12px;cursor:pointer;padding:4px 6px;border-radius:6px}
@@ -67,7 +67,7 @@ header.bar{display:flex;align-items:center;justify-content:space-between;gap:16p
 .meta{display:flex;gap:8px;align-items:center;font:500 13px/1 var(--f-mono);color:var(--muted)}
 :root{--gold:#E8C35A}
 .pk{font:800 12px/1 var(--f-display);letter-spacing:.05em;background:var(--gold);color:#1A1405;border-radius:5px;padding:4px 6px}
-.row.ring{box-shadow:inset 0 0 0 2px var(--gold);border-radius:8px;background:color-mix(in srgb,var(--gold) 8%,transparent)}
+.row.ring{box-shadow:inset 0 0 0 2px var(--gold);border-radius:8px}
 .splitb{font:700 11px/1 var(--f-display);letter-spacing:.06em;text-transform:uppercase;border:1px dashed var(--line);background:none;color:var(--muted);border-radius:999px;padding:4px 8px;cursor:pointer;visibility:hidden}
 .row:hover .splitb,.splitb:focus-visible{visibility:visible}
 .splitb:hover{color:var(--ink);border-color:var(--accent)}
@@ -78,6 +78,10 @@ header.bar{display:flex;align-items:center;justify-content:space-between;gap:16p
 .views button[aria-pressed="true"]{color:var(--ink);border-bottom-color:var(--accent)}
 .addtier{width:100%;border:1px dashed var(--line);background:none;border-radius:12px;padding:10px;color:var(--muted);font:700 14px/1 var(--f-display);text-transform:uppercase;letter-spacing:.06em;cursor:pointer}
 .addtier:hover{color:var(--ink);border-color:var(--accent)}
+.tier.unr{border-style:dashed;background:none;margin-top:18px}
+.tier.unr .tier-h{border-bottom-style:dashed}
+.tier.unr .tier-h p{margin:0;font-size:12.5px;color:var(--muted)}
+.tier.unr .list{min-height:96px}
 .g-good{color:var(--young)}.g-avg{color:var(--prime)}.g-poor{color:var(--aging)}
 .pill{font:700 12px/1 var(--f-display);letter-spacing:.05em;text-transform:uppercase;border-radius:4px;padding:3px 5px;margin-left:6px}
 .pill.g-good{background:var(--young-bg)}.pill.g-avg{background:var(--prime-bg)}.pill.g-poor{background:var(--aging-bg)}
@@ -183,7 +187,7 @@ const LEAGUES = { sh: { fmt: "1qb", skin: "rex", file: "../data.json", name: "Sh
 const VIEWS = ["ALL", "QB", "RB", "WR", "TE"];
 const st = { lg: store.get("dd_league") || "sh", view: "ALL", q: "", open: new Set(), dim: false };
 const TIER_SIZES = { ALL: [1, 3, 4, 5, 5, 6, 6, 8, 8, 10], POS: [1, 2, 3, 3, 4, 4, 5, 6] };
-const BRK = "|";
+const BRK = "|", UNR = "~";   // BRK = tier break; UNR = start of the Unranked section (always last)
 const undo = {};   // per board: earlier versions, newest last (this visit only)
 
 /* ---------- grading: what counts as good, average or poor ---------- */
@@ -200,23 +204,26 @@ const WORD = { good: "good", avg: "average", poor: "poor" };
 const key = (view = st.view) => `dd_board_${DD.class}_${st.lg}_${view}`;
 const poolFor = view => { const PL = P(); return DD.default_order[LEAGUES[st.lg].fmt].filter(n => view === "ALL" || PL[n]?.pos === view); };
 function defaultOrder(view = st.view){
-  const names = poolFor(view), sizes = view === "ALL" ? TIER_SIZES.ALL : TIER_SIZES.POS, out = []; let i = 0, t = 0;
+  const later = new Set(DD.start_unranked || []);
+  const names = poolFor(view).filter(n => !later.has(n)), sizes = view === "ALL" ? TIER_SIZES.ALL : TIER_SIZES.POS, out = []; let i = 0, t = 0;
   while (i < names.length) { const n = sizes[Math.min(t, sizes.length - 1)]; out.push(...names.slice(i, i + n)); i += n; t++; if (i < names.length) out.push(BRK); }
-  return out;
+  return [...out, UNR, ...poolFor(view).filter(n => later.has(n))];
 }
 function board(view = st.view){
   let b = store.get(key(view));
   if (!Array.isArray(b)) b = defaultOrder(view);
   const pool = poolFor(view), have = new Set(pool);
-  b = b.filter(n => n === BRK || have.has(n));                         // drop players no longer in the class
+  b = b.filter(n => n === BRK || n === UNR || have.has(n));           // drop players no longer in the class
+  if (!b.includes(UNR)) b.push(UNR);                                   // boards saved before Unranked existed
   const seen = new Set(b); const added = pool.filter(n => !seen.has(n));
-  if (added.length) b.push(...added);                                  // new prospects land at the bottom
+  if (added.length) b.push(...added);                                  // new prospects land in Unranked
   while (b[0] === BRK) b.shift();
   return b;
 }
 function save(b){ const k = key(); const prev = board(); (undo[k] ||= []).push(prev); if (undo[k].length > 30) undo[k].shift(); store.set(k, b); }
 const tiersOf = b => { const t = [[]]; for (const n of b) n === BRK ? t.push([]) : t.at(-1).push(n); return t; };
-const flat = tiers => tiers.flatMap((t, i) => i ? [BRK, ...t] : t);
+const parts = b => { const i = b.indexOf(UNR); return { tiers: tiersOf(b.slice(0, i)), unr: b.slice(i + 1) }; };
+const flat = (tiers, unr = []) => [...tiers.flatMap((t, i) => i ? [BRK, ...t] : t), UNR, ...unr];
 
 /* ---------- my picks, from DynoView's league data ---------- */
 function myPicks(){
@@ -262,7 +269,7 @@ function render(){
   $("views").innerHTML = VIEWS.map(v => `<button type="button" data-view="${v}" aria-pressed="${st.view === v}">${v === "ALL" ? "All" : v}</button>`).join("");
   $("dim").hidden = st.view !== "ALL";
   $("undo").disabled = !(undo[key()] || []).length;
-  const PL = P(), tiers = tiersOf(board()), picks = myPicks();
+  const PL = P(), { tiers, unr } = parts(board()), picks = myPicks();
   // gold ring: on the All board, the player at each of my pick numbers
   const ringAt = {}; if (st.view === "ALL") for (const pk of picks) if (pk.overall) (ringAt[pk.overall] ||= []).push(pk.label);
   const firstPick = picks.find(p => p.overall)?.overall;
@@ -271,14 +278,18 @@ function render(){
   $("board").innerHTML = tiers.map((t, ti) => `<section class="tier"><div class="tier-h"><h3>Tier ${ti + 1}<small>${t.length} player${t.length === 1 ? "" : "s"}</small></h3>${!t.length ? `<button type="button" class="x" data-remove="${ti}" title="Remove this empty tier">Remove</button>` : ti ? `<button type="button" class="x" data-merge="${ti}" title="Move these players into the tier above (nobody is removed)">Merge up</button>` : ""}</div>
     <div class="list" data-tier="${ti}">${t.length ? "" : `<div class="empty">Empty tier: drag players here</div>`}${t.map((n, i) => { rank++; const p = PL[n]; const hide = q && !(n.toLowerCase().includes(q) || (p.school || "").toLowerCase().includes(q));
       const gone = st.dim && st.view === "ALL" && firstPick && rank < firstPick; const ring = ringAt[rank];
-      return `<div class="row${ring ? " ring" : ""}${gone ? " gone" : ""}" data-name="${esc(n)}"${hide ? " hidden" : ""}><span class="grip" aria-hidden="true">⋮⋮</span><span class="rk">${rank}</span><span class="pos ${p.pos}">${p.pos}</span><span class="who"><b>${esc(n)}</b><span class="s">${esc(p.school)}</span></span><span class="meta">${i < t.length - 1 ? `<button type="button" class="splitb" data-split="${esc(n)}" title="Start a new tier after ${esc(n)}">New tier below</button>` : ""}${(ring || []).map(l => `<span class="pk" title="Your ${l} lands on this spot of your board">${l}</span>`).join("")}<span>${fmtAge(p.age)}</span></span>${st.open.has(n) ? detail(p) : ""}</div>`; }).join("")}</div></section>`).join("") + `<button type="button" class="addtier" id="addtier">+ Add an empty tier at the bottom</button>`;
+      return `<div class="row${ring ? " ring" : ""}${gone ? " gone" : ""}" data-name="${esc(n)}"${hide ? " hidden" : ""}><span class="grip" aria-hidden="true">⋮⋮</span><span class="rk">${rank}</span><span class="pos ${p.pos}">${p.pos}</span><span class="who"><b>${esc(n)}</b><span class="s">${esc(p.school)}</span></span><span class="meta">${i < t.length - 1 ? `<button type="button" class="splitb" data-split="${esc(n)}" title="Start a new tier after ${esc(n)}">New tier below</button>` : ""}${(ring || []).map(l => `<span class="pk" title="Your ${l} lands on this spot of your board">${l}</span>`).join("")}<span>${fmtAge(p.age)}</span></span>${st.open.has(n) ? detail(p) : ""}</div>`; }).join("")}</div></section>`).join("") + `<button type="button" class="addtier" id="addtier">+ Add an empty tier</button>
+    <section class="tier unr"><div class="tier-h"><h3>Unranked<small>${unr.length} player${unr.length === 1 ? "" : "s"}</small></h3><p>Not decided yet. Drag players in or out any time.</p></div>
+    <div class="list" data-unr="1">${unr.length ? "" : `<div class="empty">Drop players here that you haven't decided on</div>`}${unr.map(n => { const p = PL[n]; const hide = q && !(n.toLowerCase().includes(q) || (p.school || "").toLowerCase().includes(q));
+      return `<div class="row" data-name="${esc(n)}"${hide ? " hidden" : ""}><span class="grip" aria-hidden="true">⋮⋮</span><span class="rk">–</span><span class="pos ${p.pos}">${p.pos}</span><span class="who"><b>${esc(n)}</b><span class="s">${esc(p.school)}</span></span><span class="meta"><span>${fmtAge(p.age)}</span></span>${st.open.has(n) ? detail(p) : ""}</div>`; }).join("")}</div></section>`;
   document.querySelectorAll(".list").forEach(el => new Sortable(el, { group: "board", animation: 120, handle: ".grip", ghostClass: "ghost", filter: ".empty", onEnd: commit }));
   renderSide(picks);
   $("foot").innerHTML = `Stats from ESPN, updated ${new Date(DD.generated).toLocaleString([], {month: "short", day: "numeric", hour: "numeric", minute: "2-digit"})}. Dominator = share of team receiving yards and TDs (scrimmage yards and TDs for RBs); breakout = first season at 20% or more. Ages are on NFL draft day (${DD.draft_day}). Each tab keeps its own board, saved in this browser; Export backs up all of them.`;
 }
 function commit(){
-  const tiers = [...document.querySelectorAll(".list")].map(l => [...l.querySelectorAll(".row")].map(r => r.dataset.name));
-  save(flat(tiers)); render();
+  const names = l => [...l.querySelectorAll(".row")].map(r => r.dataset.name);
+  const tiers = [...document.querySelectorAll(".list[data-tier]")].map(names), unr = names(document.querySelector(".list[data-unr]"));
+  save(flat(tiers, unr)); render();
 }
 function renderSide(picks){
   const L = LG[st.lg];
@@ -287,7 +298,7 @@ function renderSide(picks){
     ${picks.length ? picks.map(pk => `<div class="mypk"><div class="n">${pk.label}</div><div class="t">Round ${pk.rd}${pk.overall ? `, pick ${pk.overall} overall` : ""}${pk.from ? ` · via ${esc(pk.from)}` : ""}</div></div>`).join("") : `<div class="note">No ${DD.class} picks right now.</div>`}
     <div class="note">Projected from ${basis}. On the All tab, a gold ring marks the player sitting at each of your pick numbers on your board.</div></section>
     <section class="card"><div class="card-h"><h3>Board</h3><small>each tab saves separately</small></div>
-    <div class="note">Drag a player by the ⋮⋮ handle. Hover a player and click <b>New tier below</b> to split a tier there, or add an empty tier at the bottom and drag players into it. <b>Merge up</b> moves a tier's players into the tier above; nobody is ever removed, and Undo reverses any change.</div>
+    <div class="note">Drag a player by the ⋮⋮ handle. Players you haven&#39;t decided on go in <b>Unranked</b> at the bottom; new prospects land there too. Hover a player and click <b>New tier below</b> to split a tier there, or add an empty tier at the bottom and drag players into it. <b>Merge up</b> moves a tier's players into the tier above; nobody is ever removed, and Undo reverses any change.</div>
     <div class="btns"><button type="button" id="copytxt">Copy as text</button><button type="button" id="pastetxt">Paste text</button><button type="button" id="exp">Export file</button><button type="button" id="imp">Import file</button><button type="button" id="reset">Reset this tab</button></div></section>`;
 }
 
@@ -296,9 +307,9 @@ document.addEventListener("click", e => {
   const lgB = e.target.closest(".seg button"); if (lgB) { st.lg = lgB.dataset.lg; store.set("dd_league", st.lg); render(); return; }
   const vB = e.target.closest("[data-view]"); if (vB) { st.view = vB.dataset.view; render(); return; }
   const sp = e.target.closest("[data-split]"); if (sp) { const b = board(); b.splice(b.indexOf(sp.dataset.split) + 1, 0, BRK); save(b); render(); return; }
-  const mg = e.target.closest("[data-merge]"); if (mg) { const t = tiersOf(board()), i = +mg.dataset.merge; t[i - 1].push(...t[i]); t.splice(i, 1); save(flat(t)); render(); return; }
-  const rm = e.target.closest("[data-remove]"); if (rm) { const t = tiersOf(board()); t.splice(+rm.dataset.remove, 1); save(flat(t)); render(); return; }
-  if (e.target.id === "addtier") { const b = board(); b.push(BRK); save(b); render(); return; }
+  const mg = e.target.closest("[data-merge]"); if (mg) { const { tiers: t, unr } = parts(board()), i = +mg.dataset.merge; t[i - 1].push(...t[i]); t.splice(i, 1); save(flat(t, unr)); render(); return; }
+  const rm = e.target.closest("[data-remove]"); if (rm) { const { tiers: t, unr } = parts(board()); t.splice(+rm.dataset.remove, 1); save(flat(t, unr)); render(); return; }
+  if (e.target.id === "addtier") { const b = board(); b.splice(b.indexOf(UNR), 0, BRK); save(b); render(); return; }
   if (e.target.id === "undo") { const u = undo[key()]; if (u?.length) { store.set(key(), u.pop()); render(); } return; }
   if (e.target.id === "dim") { st.dim = !st.dim; e.target.setAttribute("aria-pressed", String(st.dim)); render(); return; }
   if (e.target.id === "reset") { save(defaultOrder()); render(); return; }

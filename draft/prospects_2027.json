@@ -63,7 +63,12 @@
    "Dorian Thomas",
    "Luke Hasz",
    "Turbo Richard",
-   "Luke Dehnicke"
+   "Luke Dehnicke",
+   "Dylan Riley",
+   "Wayshawn Parker",
+   "Jamal Roberts",
+   "Sam Leavitt",
+   "Austin Simmons"
   ],
   "1qb": [
    "Jeremiah Smith",
@@ -125,7 +130,12 @@
    "Turbo Richard",
    "Luke Dehnicke",
    "Brendan Sorsby",
-   "Nico Iamaleava"
+   "Nico Iamaleava",
+   "Dylan Riley",
+   "Wayshawn Parker",
+   "Jamal Roberts",
+   "Sam Leavitt",
+   "Austin Simmons"
   ]
  },
  "players": [
@@ -548,6 +558,48 @@
    "school": "Vanderbilt",
    "dob": "",
    "espn_id": "5078165"
+  },
+  {
+   "name": "Dylan Riley",
+   "pos": "RB",
+   "school": "Boise State",
+   "dob": "",
+   "espn_id": "5146712"
+  },
+  {
+   "name": "Wayshawn Parker",
+   "pos": "RB",
+   "school": "Utah",
+   "dob": "",
+   "espn_id": "5173431"
+  },
+  {
+   "name": "Jamal Roberts",
+   "pos": "RB",
+   "school": "Missouri",
+   "dob": "",
+   "espn_id": "4921116"
+  },
+  {
+   "name": "Sam Leavitt",
+   "pos": "QB",
+   "school": "LSU",
+   "dob": "",
+   "espn_id": "5078810"
+  },
+  {
+   "name": "Austin Simmons",
+   "pos": "QB",
+   "school": "Missouri",
+   "dob": "",
+   "espn_id": "5141684"
   }
+ ],
+ "start_unranked": [
+  "Dylan Riley",
+  "Wayshawn Parker",
+  "Jamal Roberts",
+  "Sam Leavitt",
+  "Austin Simmons"
  ]
 }

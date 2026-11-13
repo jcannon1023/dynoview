@@ -160,6 +160,7 @@ def main():
     json.dump(src, open(SRC, "w"), indent=1, ensure_ascii=False)   # keeps the espn_id cache
     out = {"generated": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="minutes"),
            "class": src["class"], "draft_day": src["draft_day"], "default_order": src["default_order"],
+           "start_unranked": src.get("start_unranked", []),
            "players": players}
     json.dump(out, open(OUT, "w"), separators=(",", ":"), ensure_ascii=False)
     miss = [p["name"] for p in players if not p.get("espn_id")]
