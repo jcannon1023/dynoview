@@ -68,7 +68,9 @@
    "Wayshawn Parker",
    "Jamal Roberts",
    "Sam Leavitt",
-   "Austin Simmons"
+   "Austin Simmons",
+   "Patrick Overmyer",
+   "Willie Rodriguez"
   ],
   "1qb": [
    "Jeremiah Smith",
@@ -135,7 +137,9 @@
    "Wayshawn Parker",
    "Jamal Roberts",
    "Sam Leavitt",
-   "Austin Simmons"
+   "Austin Simmons",
+   "Patrick Overmyer",
+   "Willie Rodriguez"
   ]
  },
  "players": [
@@ -593,6 +597,20 @@
    "school": "Missouri",
    "dob": "",
    "espn_id": "5141684"
+  },
+  {
+   "name": "Patrick Overmyer",
+   "pos": "TE",
+   "school": "Houston",
+   "dob": "",
+   "espn_id": "5120299"
+  },
+  {
+   "name": "Willie Rodriguez",
+   "pos": "TE",
+   "school": "Kentucky",
+   "dob": "",
+   "espn_id": "5136838"
   }
  ],
  "start_unranked": [
@@ -600,6 +618,8 @@
   "Wayshawn Parker",
   "Jamal Roberts",
   "Sam Leavitt",
-  "Austin Simmons"
+  "Austin Simmons",
+  "Patrick Overmyer",
+  "Willie Rodriguez"
  ]
 }
