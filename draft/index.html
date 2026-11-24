@@ -110,6 +110,7 @@ td{padding:5px 6px;text-align:right;border-bottom:1px solid var(--line)}
 .txt{padding:0 14px 12px}
 .txt textarea{width:100%;height:150px;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px;font:12px/1.4 var(--f-mono);resize:vertical}
 .txt p{margin:6px 0;font-size:12.5px;color:var(--muted)}
+.side a{color:var(--accent)}
 .txt button{border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);border-radius:8px;padding:7px 12px;font:700 13px/1 var(--f-display);letter-spacing:.05em;text-transform:uppercase;cursor:pointer}
 .foot{margin-top:18px;font-size:12px;color:var(--muted)}
 .foot a{color:var(--accent)}
@@ -220,7 +221,7 @@ function board(view = st.view){
   while (b[0] === BRK) b.shift();
   return b;
 }
-function save(b){ const k = key(); const prev = board(); (undo[k] ||= []).push(prev); if (undo[k].length > 30) undo[k].shift(); store.set(k, b); }
+function save(b){ const k = key(); const prev = board(); (undo[k] ||= []).push(prev); if (undo[k].length > 30) undo[k].shift(); putBoard(k, b); }
 const tiersOf = b => { const t = [[]]; for (const n of b) n === BRK ? t.push([]) : t.at(-1).push(n); return t; };
 const parts = b => { const i = b.indexOf(UNR); return { tiers: tiersOf(b.slice(0, i)), unr: b.slice(i + 1) }; };
 const flat = (tiers, unr = []) => [...tiers.flatMap((t, i) => i ? [BRK, ...t] : t), UNR, ...unr];
@@ -294,7 +295,7 @@ function commit(){
 function renderSide(picks){
   const L = LG[st.lg];
   const basis = L ? (L.draft_race.rest_basis === "playoff finish" ? "final standings and playoffs" : "current standings, with playoff teams ordered by win-now strength") : "";
-  $("side").innerHTML = `<section class="card"><div class="card-h"><h3>Your ${DD.class} picks</h3><small>${picks.length} pick${picks.length === 1 ? "" : "s"}</small></div>
+  $("side").innerHTML = syncCard() + `<section class="card"><div class="card-h"><h3>Your ${DD.class} picks</h3><small>${picks.length} pick${picks.length === 1 ? "" : "s"}</small></div>
     ${picks.length ? picks.map(pk => `<div class="mypk"><div class="n">${pk.label}</div><div class="t">Round ${pk.rd}${pk.overall ? `, pick ${pk.overall} overall` : ""}${pk.from ? ` · via ${esc(pk.from)}` : ""}</div></div>`).join("") : `<div class="note">No ${DD.class} picks right now.</div>`}
     <div class="note">Projected from ${basis}. On the All tab, a gold ring marks the player sitting at each of your pick numbers on your board.</div></section>
     <section class="card"><div class="card-h"><h3>Board</h3><small>each tab saves separately</small></div>
@@ -310,7 +311,7 @@ document.addEventListener("click", e => {
   const mg = e.target.closest("[data-merge]"); if (mg) { const { tiers: t, unr } = parts(board()), i = +mg.dataset.merge; t[i - 1].push(...t[i]); t.splice(i, 1); save(flat(t, unr)); render(); return; }
   const rm = e.target.closest("[data-remove]"); if (rm) { const { tiers: t, unr } = parts(board()); t.splice(+rm.dataset.remove, 1); save(flat(t, unr)); render(); return; }
   if (e.target.id === "addtier") { const b = board(); b.splice(b.indexOf(UNR), 0, BRK); save(b); render(); return; }
-  if (e.target.id === "undo") { const u = undo[key()]; if (u?.length) { store.set(key(), u.pop()); render(); } return; }
+  if (e.target.id === "undo") { const u = undo[key()]; if (u?.length) { putBoard(key(), u.pop()); render(); } return; }
   if (e.target.id === "dim") { st.dim = !st.dim; e.target.setAttribute("aria-pressed", String(st.dim)); render(); return; }
   if (e.target.id === "reset") { save(defaultOrder()); render(); return; }
   if (e.target.id === "copytxt") {
@@ -335,17 +336,107 @@ document.addEventListener("click", e => {
 });
 $("q").addEventListener("input", e => { st.q = e.target.value.trim(); render(); });
 function allBoards(){ const boards = {}; for (const lg of Object.keys(LEAGUES)) for (const v of VIEWS) { const b = store.get(`dd_board_${DD.class}_${lg}_${v}`); if (b) boards[`${lg}_${v}`] = b; } return boards; }
-function loadBoards(j){ let n = 0; for (const [k, b] of Object.entries(j.boards || {})) if (Array.isArray(b)) { store.set(`dd_board_${j.class || DD.class}_${k}`, b); n++; } return n; }
+function loadBoards(j){ let n = 0; for (const [k, b] of Object.entries(j.boards || {})) if (Array.isArray(b)) { putBoard(`dd_board_${j.class || DD.class}_${k}`, b); n++; } return n; }
 function showText(html){ let el = $("txt"); if (!el) { el = document.createElement("div"); el.id = "txt"; el.className = "txt"; document.querySelector(".side .btns").after(el); } el.innerHTML = html; }
+/* ---------- sync across devices: boards saved to a private GitHub gist ---------- */
+// Each device stores a GitHub token (gist scope only) in this browser. Boards go to one secret gist,
+// file dynodraft-boards.json, as {boards: {"dd_board_<class>_<lg>_<view>": {b: [...], t: <ms>}}}.
+// Merging is per board: the most recently changed copy of each board wins.
+const SYNC_FILE = "dynodraft-boards.json";
+const SY = { token: store.get("dd_gh_token"), gist: store.get("dd_gh_gist"), login: store.get("dd_gh_login"),
+             state: "off", msg: "", last: store.get("dd_gh_last"), choice: null, timer: null, busy: false };
+let STAMPS = store.get("dd_stamps") || {};
+const API = () => store.get("dd_gh_api") || "https://api.github.com";
+function putBoard(k, b){ store.set(k, b); STAMPS[k] = Date.now(); store.set("dd_stamps", STAMPS); queueSync(); }
+function localBoards(){ const out = {}; try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith("dd_board_")) out[k] = { b: store.get(k), t: STAMPS[k] || 0 }; } } catch (e) {} return out; }
+async function gh(path, opts = {}){
+  const r = await fetch(API() + path, { ...opts, headers: { "Authorization": `Bearer ${SY.token}`, "Accept": "application/vnd.github+json", ...(opts.body ? { "Content-Type": "application/json" } : {}) } });
+  if (r.status === 401) throw new Error("GitHub didn't accept that token. Make a new one with the gist box ticked.");
+  if (!r.ok) throw new Error(`GitHub said ${r.status}. Try again in a minute.`);
+  return r.status === 204 ? null : r.json();
+}
+async function findGist(){
+  for (let page = 1; page <= 5; page++) { const list = await gh(`/gists?per_page=100&page=${page}`); const g = list.find(x => x.files && x.files[SYNC_FILE]); if (g) return g.id; if (list.length < 100) break; }
+  return null;
+}
+async function readRemote(){
+  const g = await gh(`/gists/${SY.gist}`); const f = g.files?.[SYNC_FILE]; if (!f) return { boards: {} };
+  const text = f.truncated ? await (await fetch(f.raw_url)).text() : f.content;
+  try { return JSON.parse(text); } catch (e) { return { boards: {} }; }
+}
+async function writeRemote(boards){
+  const body = JSON.stringify({ description: "DynoDraft boards (synced between devices)", files: { [SYNC_FILE]: { content: JSON.stringify({ v: 1, saved: new Date().toISOString(), boards }) } } });
+  if (SY.gist) await gh(`/gists/${SY.gist}`, { method: "PATCH", body });
+  else { const g = await gh(`/gists`, { method: "POST", body: JSON.stringify({ ...JSON.parse(body), public: false }) }); SY.gist = g.id; store.set("dd_gh_gist", g.id); }
+}
+function applyRemote(k, v){ store.set(k, v.b); STAMPS[k] = v.t; }
+async function syncNow(){
+  if (!SY.token || SY.busy || SY.choice) return;
+  SY.busy = true; SY.state = "busy"; paintSync();
+  try {
+    if (!SY.gist) { const id = await findGist(); if (id) { SY.gist = id; store.set("dd_gh_gist", id); } }
+    const remote = SY.gist ? ((await readRemote()).boards || {}) : {};
+    const local = localBoards();
+    // first link of a device that already has its own boards: ask before mixing them
+    if (!store.get("dd_gh_linked") && Object.keys(remote).length && Object.keys(local).length) { SY.choice = { remote }; SY.state = "choose"; SY.busy = false; paintSync(); return; }
+    let changedHere = false, needPush = !SY.gist;
+    for (const [k, v] of Object.entries(remote)) { if (!local[k] || v.t > local[k].t) { applyRemote(k, v); changedHere = true; } }
+    for (const [k, v] of Object.entries(local)) { if (!remote[k] || v.t > remote[k].t) needPush = true; }
+    store.set("dd_stamps", STAMPS);
+    if (needPush) await writeRemote(localBoards());
+    store.set("dd_gh_linked", true);
+    SY.last = Date.now(); store.set("dd_gh_last", SY.last); SY.state = "ok"; SY.msg = "";
+    if (changedHere) render();
+  } catch (e) { SY.state = "error"; SY.msg = e.message || "Sync failed. Check your connection."; }
+  SY.busy = false; paintSync();
+}
+function queueSync(){ if (!SY.token) return; clearTimeout(SY.timer); SY.timer = setTimeout(syncNow, 2500); SY.state = "pending"; paintSync(); }
+async function resolveChoice(keepHere){
+  const remote = SY.choice.remote; SY.choice = null;
+  const now = Date.now();
+  if (keepHere) { for (const k of Object.keys(localBoards())) STAMPS[k] = now; for (const [k, v] of Object.entries(remote)) if (!store.get(k)) applyRemote(k, v); }
+  else { for (const [k, v] of Object.entries(remote)) applyRemote(k, v); }
+  store.set("dd_stamps", STAMPS);
+  try { await writeRemote(localBoards()); store.set("dd_gh_linked", true); SY.last = Date.now(); store.set("dd_gh_last", SY.last); SY.state = "ok"; }
+  catch (e) { SY.state = "error"; SY.msg = e.message; }
+  render();
+}
+async function connect(token){
+  SY.token = token.trim(); SY.state = "busy"; SY.msg = ""; paintSync();
+  try { const me = await gh("/user"); SY.login = me.login; store.set("dd_gh_token", SY.token); store.set("dd_gh_login", me.login); await syncNow(); }
+  catch (e) { SY.token = null; SY.state = "error"; SY.msg = e.message; paintSync(); }
+}
+function disconnect(){ for (const k of ["dd_gh_token", "dd_gh_gist", "dd_gh_login", "dd_gh_last", "dd_gh_linked"]) { try { localStorage.removeItem(k); } catch (e) {} } Object.assign(SY, { token: null, gist: null, login: null, last: null, state: "off", msg: "", choice: null }); paintSync(); }
+function syncCard(){
+  const when = SY.last ? new Date(SY.last).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "never";
+  let body;
+  if (!SY.token) body = `<div class="note">Keep your boards the same on your phone and computer. One-time setup on each device: make a GitHub token that can only touch gists, then paste it here. Your boards go to a private gist in your account.</div>
+    <div class="txt"><p><a href="https://github.com/settings/tokens/new?scopes=gist&description=DynoDraft%20sync" target="_blank" rel="noopener">1. Make a token on GitHub ↗</a> (tick only <b>gist</b>; set expiration to <b>No expiration</b>)</p>
+    <p>2. Paste it here:</p><input id="ghtok" type="password" autocomplete="off" placeholder="ghp_…" style="width:100%;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px;font:13px var(--f-mono)">
+    <p><button type="button" id="ghconnect">Turn on sync</button></p>${SY.msg ? `<p class="g-poor">${esc(SY.msg)}</p>` : ""}</div>`;
+  else if (SY.state === "choose") body = `<div class="note"><b>This device already has boards, and so does your sync.</b> Which should win? Boards that only one side has are kept either way.</div>
+    <div class="btns"><button type="button" id="keephere">Keep this device's boards</button><button type="button" id="keepsync">Use the synced boards</button></div>`;
+  else body = `<div class="note">${SY.state === "busy" ? "Syncing…" : SY.state === "pending" ? "Saving your change…" : SY.state === "error" ? `<span class="g-poor">${esc(SY.msg)}</span>` : "<span class=\"g-good\">On.</span> Changes save to GitHub a few seconds after you make them."}<br>Account: ${esc(SY.login || "")} · last synced ${when}</div>
+    <div class="btns"><button type="button" id="syncnow">Sync now</button><button type="button" id="ghoff">Turn off on this device</button></div>`;
+  return `<section class="card" id="synccard"><div class="card-h"><h3>Sync</h3><small>${SY.token ? (SY.state === "error" ? "problem" : "on") : "off"}</small></div>${body}</section>`;
+}
+function paintSync(){ const el = $("synccard"); if (el) el.outerHTML = syncCard(); }
+document.addEventListener("click", e => {
+  if (e.target.id === "ghconnect") { const t = $("ghtok")?.value || ""; if (t.trim()) connect(t); return; }
+  if (e.target.id === "syncnow") { syncNow(); return; }
+  if (e.target.id === "ghoff") { disconnect(); return; }
+  if (e.target.id === "keephere") { resolveChoice(true); return; }
+  if (e.target.id === "keepsync") { resolveChoice(false); return; }
+});
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") syncNow(); });
 async function boot(){
   try { if (!DD) DD = await (await fetch("data.json", { cache: "no-store" })).json(); } catch (e) {}
   for (const k of ["sh", "fn"]) { try { if (!LG[k]) LG[k] = await (await fetch(LEAGUES[k].file, { cache: "no-store" })).json(); } catch (e) {} }
   if (!DD) { $("board").innerHTML = `<p>Couldn't load the prospect list. Refresh the page.</p>`; return; }
   render();
+  syncNow();
 }
 boot();
 </script>
 </body>
 </html>
-
-</body></html>
