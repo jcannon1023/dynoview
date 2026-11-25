@@ -317,17 +317,18 @@ const API = () => store.get("dd_gh_api") || "https://api.github.com";
 function putBoard(k, b){ store.set(k, b); STAMPS[k] = Date.now(); store.set("dd_stamps", STAMPS); queueSync(); }
 function localBoards(){ const out = {}; try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith("dd_board_")) out[k] = { b: store.get(k), t: STAMPS[k] || 0 }; } } catch (e) {} return out; }
 async function gh(path, opts = {}){
-  const r = await fetch(API() + path, { ...opts, headers: { "Authorization": `Bearer ${SY.token}`, "Accept": "application/vnd.github+json", ...(opts.body ? { "Content-Type": "application/json" } : {}) } });
+  const r = await fetch(API() + path, { cache: "no-store", ...opts, headers: { "Authorization": `Bearer ${SY.token}`, "Accept": "application/vnd.github+json", ...(opts.body ? { "Content-Type": "application/json" } : {}) } });
   if (r.status === 401) throw new Error("GitHub didn't accept that token. Make a new one with the gist box ticked.");
   if (!r.ok) throw new Error(`GitHub said ${r.status}. Try again in a minute.`);
   return r.status === 204 ? null : r.json();
 }
-async function findGist(){
-  for (let page = 1; page <= 5; page++) { const list = await gh(`/gists?per_page=100&page=${page}`); const g = list.find(x => x.files && x.files[SYNC_FILE]); if (g) return g.id; if (list.length < 100) break; }
-  return null;
+async function findGists(){
+  const out = [];
+  for (let page = 1; page <= 5; page++) { const list = await gh(`/gists?per_page=100&page=${page}`); out.push(...list.filter(x => x.files && x.files[SYNC_FILE])); if (list.length < 100) break; }
+  return out.sort((x, y) => String(x.created_at).localeCompare(String(y.created_at))).map(x => x.id);
 }
-async function readRemote(){
-  const g = await gh(`/gists/${SY.gist}`); const f = g.files?.[SYNC_FILE]; if (!f) return { boards: {} };
+async function readRemote(id = SY.gist){
+  const g = await gh(`/gists/${id}`); const f = g.files?.[SYNC_FILE]; if (!f) return { boards: {} };
   const text = f.truncated ? await (await fetch(f.raw_url)).text() : f.content;
   try { return JSON.parse(text); } catch (e) { return { boards: {} }; }
 }
@@ -341,8 +342,10 @@ async function syncNow(){
   if (!SY.token || SY.busy || SY.choice) return;
   SY.busy = true; SY.state = "busy"; paintSync();
   try {
-    if (!SY.gist) { const id = await findGist(); if (id) { SY.gist = id; store.set("dd_gh_gist", id); } }
-    const remote = SY.gist ? ((await readRemote()).boards || {}) : {};
+    const ids = await findGists();
+    let remote = {}; const strays = ids.slice(1);
+    for (const id of ids) { const bs = (await readRemote(id)).boards || {}; for (const [k, v] of Object.entries(bs)) if (!remote[k] || v.t > remote[k].t) remote[k] = v; }
+    SY.gist = ids[0] || null; store.set("dd_gh_gist", SY.gist);
     const local = localBoards();
     // first link of a device that already has its own boards: ask before mixing them
     if (!store.get("dd_gh_linked") && Object.keys(remote).length && Object.keys(local).length) { SY.choice = { remote }; SY.state = "choose"; SY.busy = false; paintSync(); return; }
@@ -350,7 +353,8 @@ async function syncNow(){
     for (const [k, v] of Object.entries(remote)) { if (!local[k] || v.t > local[k].t) { applyRemote(k, v); changedHere = true; } }
     for (const [k, v] of Object.entries(local)) { if (!remote[k] || v.t > remote[k].t) needPush = true; }
     store.set("dd_stamps", STAMPS);
-    if (needPush) await writeRemote(localBoards());
+    if (needPush || strays.length) await writeRemote(localBoards());
+    for (const id of strays) { try { await gh(`/gists/${id}`, { method: "DELETE" }); } catch (e) {} }   // duplicates from a device that connected too early
     store.set("dd_gh_linked", true);
     SY.last = Date.now(); store.set("dd_gh_last", SY.last); SY.state = "ok"; SY.msg = "";
     if (changedHere) render();
